@@ -1,0 +1,10 @@
+Current Problems facing at present regarding the Documentation
+
+1. How to write the doc in a systematic way?
+For Example, in the one which I made, it takes sort of recursive approach, as to while explaining the Parser prototype, while describing any particulat thing, I described various things which are used by that,there and then 
+only. Is this approach correct?
+
+2. To what extent any particular thing be explained. For example, when explaining a thing(a prototype, or a filter type etc.), should I explain the implementation details, or how to use, or just what it provides?
+
+Please point out the changes/modifications/deletions/additions that need to be done to the present one.
+Will be changing the format of the present one, and will be adding it to the this repo.
