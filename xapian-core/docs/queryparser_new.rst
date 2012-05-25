@@ -1204,7 +1204,7 @@ The corresponding grammar rules applied in the order of application are as follo
 
 In this case, the Query object formed is::
 	
-	Query(((Zx@1 OR y@3) OR (near@4 OR Zz@5)))
+	Query(((Zx@1 OR Zy@3) OR (near@4 OR Zz@5)))
 
 Wildcard Query
 ---------------
