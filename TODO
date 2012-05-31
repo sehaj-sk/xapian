@@ -1,10 +1,40 @@
-Current Problems facing at present regarding the Documentation
+Task - 1 : Understanding and making the documentation
+           Have added the doc in /xapian-core/docs folder with name as
+           "queryparser_new.rst"
 
-1. How to write the doc in a systematic way?
-For Example, in the one which I made, it takes sort of recursive approach, as to while explaining the Parser prototype, while describing any particulat thing, I described various things which are used by that,there and then 
-only. Is this approach correct?
+Task - 2 : Initially made some suggestions about the possible additions in
+           Xapian QueryParser syntax on the basis of syntax which were
+           available in other places. The file is placed in
+           xapian-core/queryparser folder with name as "suggestions.rst".
 
-2. To what extent any particular thing be explained. For example, when explaining a thing(a prototype, or a filter type etc.), should I explain the implementation details, or how to use, or just what it provides?
+           Then as Olly suggested, devoted quite some time to see what happens
+           to the real world queries present in queryparsertest.cc once,
+           after disabling the “re-parse with fags off” code. Made a
+           list of the queries which gave error. There were around 130 or
+           so such queries.
+           The files are placed in a new folder named "report" present in the
+           main directory with the name of files - "error_report_details.txt"
+           and "summary.txt".
+           Have made two plain text files -
 
-Please point out the changes/modifications/deletions/additions that need to be done to the present one.
-Will be changing the format of the present one, and will be adding it to this repo.
+           1st one (named "error_report_details.txt", is quite a big file,
+           with all the plain text) contains
+           all the queries
+           from the real-world queries present in queryparsertest.cc which
+           gave error
+           while disabling the re-parse with no flags code., in order of
+           their appearance
+           in queryparsertest.cc.  With each query, following things are
+           mentioned -
+
+            1.  Query object returned when parsed with no flags.
+            2.  The tokens produced by parsing the query with no flags
+            3.  The tokens produced by parsing the query with flags
+            4.  The reason of parse error for the particular query.
+
+           2nd one (named "summary.txt") is the summary file, and is small
+           too, made on the basis of
+           the 1st file. It contains the information about the parser errors,
+           grouped together along with the examples of queries which are not
+           parsed because of those parser errors.
+
