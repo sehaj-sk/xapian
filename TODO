@@ -38,3 +38,10 @@ Task - 2 : Initially made some suggestions about the possible additions in
            grouped together along with the examples of queries which are not
            parsed because of those parser errors.
 
+           Looked into the lucene source-code and got to know about the
+           lucene query syntax and its lexer and parser.
+           Found out how lucene handles the errors which were found on
+           the basis of above task (those which are mentioned in summary.txt)
+           and have written the findings in a plain text file called
+           "lucene_findings.txt" plcaed in /report.
+
