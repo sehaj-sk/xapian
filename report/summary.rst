@@ -194,20 +194,9 @@ Following are the different parse errors:
 5. If we have a HATE query between the brackets then it leads to parse error
    but if we have the LOVE query between the brackets then it doesn't ! For
    example, the query ``(+xapian)`` parses without giving error but the query
-   ``(-xapian)`` does not get parsed and gives error. Can't figure out why,
-   since the grammar productions for both of them are actually same, as
-   follow::
-
-       prob ::= LOVE term.
-       prob ::= stop_prob LOVE term.
-
-       prob ::= HATE term.
-       prob ::= stop_prob HATE term.
-
-   Also in both the cases identical tokens are produced::
-
-       For (+xapian):  BRA, LOVE, TERM("xapian"), KET
-       For (-xapian):  BRA, HATE, TERM("xapian"), KET
+   ``(-xapian)`` does not get parsed and gives error. 
+   The reason here is that we can't just hate terms. There needs to be atleast
+   one term which is not being heated.
 
   
    Example Queries::
