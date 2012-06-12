@@ -1,0 +1,169 @@
+diff --git a/xapian-core/queryparser/queryparser.lemony b/xapian-core/queryparser/queryparser.lemony
+index 8dedb80..a6d178c 100644
+--- a/xapian-core/queryparser/queryparser.lemony
++++ b/xapian-core/queryparser/queryparser.lemony
+@@ -114,6 +114,70 @@ is_positional(Xapian::Query::op op)
+     return (op == Xapian::Query::OP_PHRASE || op == Xapian::Query::OP_NEAR);
+ }
+ 
++inline bool
++pseudo_brackets_tell(unsigned ch) {
++    return ch == ')' || ch == '(' || is_wordchar(ch);
++} 
++ 
++inline bool 
++pseudo_brackets_checker(Utf8Iterator it)
++{
++    Utf8Iterator end;
++    
++    //Also check for '(' since there may be the case of nested brackets. If
++    //so, then would be better to just refer the present character as token
++    //BRA rather than iterating further to see what the case is.
++    Utf8Iterator bra_ket_wordchar = find_if(it, end, pseudo_brackets_tell);
++    
++    //If Reached end or reached ')', then don't consider it as the token BRA
++    if (bra_ket_wordchar == end || *bra_ket_wordchar == ')') {
++        return true;
++    }
++
++    //Else the current character can be called the token BRA.
++    return false;
++}
++
++inline bool
++pseudo_quotes_tell(unsigned ch) {
++    return is_double_quote(ch) || is_wordchar(ch);
++}
++
++inline bool 
++pseudo_quotes_checker(Utf8Iterator it)
++{
++    Utf8Iterator end;
++
++    //Can't count for nested quotes here since the character for opening as
++    //well as closing quotes is same - '"' !
++    Utf8Iterator quote_or_wordchar = find_if(it, end, pseudo_quotes_tell);
++    
++    //If Reached end or reached ' " ', then don't consider it as the token BRA
++    if (quote_or_wordchar == end || is_double_quote(*quote_or_wordchar)) {
++        return true;
++    }
++
++    //Else the current characater can be called the token QUOTE.
++    return false;
++}
++
++inline bool
++is_wordchar_whitespace(unsigned ch) {
++    return is_whitespace(ch) || is_wordchar(ch);
++}
++
++inline bool 
++pseudo_lovehate_checker(Utf8Iterator it)
++{
++    Utf8Iterator end;
++    Utf8Iterator wordchar_or_whitespace = find_if(it, end, is_wordchar_whitespace);
++    
++    if (wordchar_or_whitespace == end || is_whitespace(*wordchar_or_whitespace)) {
++        return true;
++    }
++    return false;
++}
++
+ /// A structure identifying a group of filter terms or a value range.
+ struct filter_group_id {
+     /** The prefix info for boolean filter terms.
+@@ -730,6 +794,8 @@ QueryParser::Internal::parse_query(const string &qs, unsigned flags,
+     bool value_ranges;
+     value_ranges = !valrangeprocs.empty() && (qs.find("..") != string::npos);
+ 
++    //To detect the number of unmatched BRA tokens detected till any point
++    int number_of_bra = 0;
+     termpos term_pos = 1;
+     Utf8Iterator it(qs), end;
+ 
+@@ -868,6 +934,15 @@ just_had_operator_needing_term:
+ 			newprev = *it++;
+ 			break;
+ 		    }
++		    //Ignore quotes containing only non-word characters inside them
++		    if (pseudo_quotes_checker(it)) {
++		        //We have to move the iterator forward since there are
++		        //just characters between the quotes
++		        it = find_if(it, end, pseudo_quotes_tell);
++		        if (it == end) goto done;
++		        newprev = *it++;
++		        break;
++		    }
+ 		}
+ 		if (flags & QueryParser::FLAG_PHRASE) {
+ 		    Parse(pParser, QUOTE, NULL, &state);
+@@ -889,7 +964,8 @@ just_had_operator_needing_term:
+ 		    // Or if not after whitespace or an open bracket.
+ 		    break;
+ 		}
+-		if (is_whitespace(*it) || *it == '+' || *it == '-') {
++		if (is_whitespace(*it) || *it == '+' || *it == '-'  || pseudo_lovehate_checker(it)) {
++		    //Ignore + or - followed by only non-word characters
+ 		    // Ignore + or - followed by a space, or further + or -.
+ 		    // Postfix + (such as in C++ and H+) is handled as part of
+ 		    // the term lexing code in parse_term().
+@@ -926,18 +1002,29 @@ just_had_operator_needing_term:
+ 		    newprev = *it++;
+ 		    break;
+ 		}
++		//Ignore brackets containing only non-word characters inside them
++		if (pseudo_brackets_checker(it)) {
++		    //We have to move the iterator forward since there are
++		    //just characters between the brackets
++		    it = find_if(it, end, pseudo_brackets_tell);
++		    if (it == end) goto done;
++		    newprev = *it++;
++		    break;
++		}
+ 		if (mode == DEFAULT && (flags & FLAG_BOOLEAN)) {
+ 		    prefix_stack.push_back(prefix_stack.back());
++		    ++number_of_bra;
+ 		    Parse(pParser, BRA, NULL, &state);
+ 		}
+ 		break;
+ 
+ 	      case ')': // End of bracketed subexpression.
+-		if (mode == DEFAULT && (flags & FLAG_BOOLEAN)) {
++		if (mode == DEFAULT && (flags & FLAG_BOOLEAN) && number_of_bra > 0) {
+ 		    // Remove the prefix we pushed for the corresponding BRA.
+ 		    // If brackets are unmatched, it's a syntax error, but
+ 		    // that's no excuse to SEGV!
+ 		    if (prefix_stack.size() > 1) prefix_stack.pop_back();
++		    --number_of_bra;
+ 		    Parse(pParser, KET, NULL, &state);
+ 		}
+ 		break;
+@@ -1041,6 +1128,7 @@ just_had_operator_needing_term:
+ 		    if (ch == '(' && (flags & FLAG_BOOLEAN)) {
+ 			// Prefixed subexpression, e.g.: title:(fast NEAR food)
+ 			mode = DEFAULT;
++			++number_of_bra;
+ 			Parse(pParser, BRA, NULL, &state);
+ 			it = p;
+ 			newprev = ch;
+@@ -1309,6 +1397,11 @@ done:
+ 	// Implicitly close any unclosed quotes...
+ 	if (mode == IN_QUOTES || mode == IN_PREFIXED_QUOTES)
+ 	    Parse(pParser, QUOTE, NULL, &state);
++	//To avoid possible parse errors related to unmatched brackets
++	while (number_of_bra > 0) {
++	    Parse(pParser, KET, NULL, &state);
++	    --number_of_bra;
++	}
+ 	Parse(pParser, 0, NULL, &state);
+     }
+ 
+@@ -1838,6 +1931,7 @@ prob_expr(E) ::= prob(P). {
+     if (P->hate && !P->hate->empty()) {
+ 	if (!E) {
+ 	    // Can't just hate!
++	    state->error = "Syntax Error: Can't just HATE a term.\n Did you meant to use the HATE query? \nIf not, try removing '-'or giving space after '-'";
+ 	    yy_parse_failed(yypParser);
+ 	    return;
+ 	}

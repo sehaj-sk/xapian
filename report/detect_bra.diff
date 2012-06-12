@@ -1,0 +1,17 @@
+diff --git a/xapian-core/queryparser/queryparser.lemony b/xapian-core/queryparser/queryparser.lemony
+index 8dedb80..cb3bc0d 100644
+--- a/xapian-core/queryparser/queryparser.lemony
++++ b/xapian-core/queryparser/queryparser.lemony
+@@ -917,10 +917,10 @@ just_had_operator_needing_term:
+ 		it = find_if(it, end, is_not_whitespace);
+ 		// Ignore ( at the end of the query string.
+ 		if (it == end) goto done;
+-		if (prev > ' ' && strchr("()+-", prev) == NULL) {
++		/*if (prev > ' ' && strchr("()+-", prev) == NULL) {
+ 		    // Or if not after whitespace or a bracket or '+' or '-'.
+ 		    break;
+-		}
++		}*/
+ 		if (*it == ')') {
+ 		    // Ignore empty ().
+ 		    newprev = *it++;
