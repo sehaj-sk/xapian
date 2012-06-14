@@ -730,6 +730,8 @@ QueryParser::Internal::parse_query(const string &qs, unsigned flags,
     bool value_ranges;
     value_ranges = !valrangeprocs.empty() && (qs.find("..") != string::npos);
 
+    //To detect the number of unmatched BRA tokens detected till any point
+    int number_of_bra = 0;
     termpos term_pos = 1;
     Utf8Iterator it(qs), end;
 
@@ -928,16 +930,18 @@ just_had_operator_needing_term:
 		}
 		if (mode == DEFAULT && (flags & FLAG_BOOLEAN)) {
 		    prefix_stack.push_back(prefix_stack.back());
+		    ++number_of_bra;
 		    Parse(pParser, BRA, NULL, &state);
 		}
 		break;
 
 	      case ')': // End of bracketed subexpression.
-		if (mode == DEFAULT && (flags & FLAG_BOOLEAN)) {
+		if (mode == DEFAULT && (flags & FLAG_BOOLEAN) && number_of_bra > 0) {
 		    // Remove the prefix we pushed for the corresponding BRA.
 		    // If brackets are unmatched, it's a syntax error, but
 		    // that's no excuse to SEGV!
 		    if (prefix_stack.size() > 1) prefix_stack.pop_back();
+		    --number_of_bra;
 		    Parse(pParser, KET, NULL, &state);
 		}
 		break;
@@ -1041,6 +1045,7 @@ just_had_operator_needing_term:
 		    if (ch == '(' && (flags & FLAG_BOOLEAN)) {
 			// Prefixed subexpression, e.g.: title:(fast NEAR food)
 			mode = DEFAULT;
+			++number_of_bra;
 			Parse(pParser, BRA, NULL, &state);
 			it = p;
 			newprev = ch;
@@ -1309,6 +1314,11 @@ done:
 	// Implicitly close any unclosed quotes...
 	if (mode == IN_QUOTES || mode == IN_PREFIXED_QUOTES)
 	    Parse(pParser, QUOTE, NULL, &state);
+	//To avoid possible parse errors related to unmatched brackets
+	while (number_of_bra > 0) {
+	    Parse(pParser, KET, NULL, &state);
+	    --number_of_bra;
+	}
 	Parse(pParser, 0, NULL, &state);
     }
 
