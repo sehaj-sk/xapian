@@ -114,6 +114,30 @@ is_positional(Xapian::Query::op op)
     return (op == Xapian::Query::OP_PHRASE || op == Xapian::Query::OP_NEAR);
 }
 
+
+inline bool
+pseudo_quotes_tell(unsigned ch) {
+    return is_double_quote(ch) || is_wordchar(ch);
+}
+
+inline bool
+pseudo_quotes_checker(Utf8Iterator it)
+{
+    Utf8Iterator end;
+
+    //Can't count for nested quotes here since the character for opening as
+    //well as closing quotes is same - '"' !
+    Utf8Iterator quote_or_wordchar = find_if(it, end, pseudo_quotes_tell);
+
+    //If Reached end or reached ' " ', then don't consider it as the token QUOTE
+    if (quote_or_wordchar == end || is_double_quote(*quote_or_wordchar)) {
+	return true;
+    }
+
+    //Else the current characater can be called the token QUOTE.
+    return false;
+}
+
 inline bool
 is_wordchar_whitespace(unsigned ch) {
     return is_whitespace(ch) || is_wordchar(ch);
@@ -884,6 +908,15 @@ just_had_operator_needing_term:
 			// Ignore empty "" (but only if we're not already
 			// IN_QUOTES as we don't merge two adjacent quoted
 			// phrases!)
+			newprev = *it++;
+			break;
+		    }
+		    // Ignore quotes containing only non-word characters inside them
+		    if (pseudo_quotes_checker(it)) {
+			//We have to move the iterator forward since there are
+			//just characters between the quotes
+			it = find_if(it, end, pseudo_quotes_tell);
+			if (it == end) goto done;
 			newprev = *it++;
 			break;
 		    }
