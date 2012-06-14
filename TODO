@@ -45,3 +45,23 @@ Task - 2 : Initially made some suggestions about the possible additions in
            and have written the findings in a plain text file called
            "lucene_findings.txt" plcaed in /report.
 
+           As per the reviews mailed by Dan Colish, made chages to queryparser
+           doc (xapian-core/docs/queryparser_new.rst) to restructure it,
+           delete the non-required content and did the TODO's mentioned in
+           the diff mailed by dan.
+
+           Formatted the summary.txt file produced earlier. It is present
+           here - report/summary.rst
+
+           Finding Solutions and testing them -
+           Made attempts to make changes in queryparser.lemony to recover
+           from parse errors mentioned in report/summary.rst Have made the
+           corresponding commits. I made the changes as well as tested them
+           on the queryparsertest.cc and on some own-made queries.
+           Broadly speeking, except for emoticons related error, the other
+           queries could be dealt with fairly easily. The corresponding
+           changes have been made in queryparser.lemony.
+           For the emoticons detection/extraction, have made a class
+           emoticon.cc.
+           ALl the details are present in plain text file -
+           report/solutions.txt
