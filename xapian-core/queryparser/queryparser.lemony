@@ -1931,6 +1931,7 @@ prob_expr(E) ::= prob(P). {
     if (P->hate && !P->hate->empty()) {
 	if (!E) {
 	    // Can't just hate!
+	    state->error = "Syntax Error: Can't just HATE a term.\n Did you meant to use the HATE query? \nIf not, try removing '-'or giving space after '-'";
 	    yy_parse_failed(yypParser);
 	    return;
 	}
