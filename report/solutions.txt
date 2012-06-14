@@ -1,3 +1,7 @@
+NOTE: Since pushing diff is not the right way, have made the changes
+in queryparser.lemony and pushed it. You can view the commits here -
+https://github.com/sehaj-sk/xapian/commits/mybranch
+
 Since the QueryParser has a hand-written lexer, and a Lemon generated parser,
 I figured that it would be better to control the Lexer so as to recover from
 errors rather than trying it at the Parser's end.
