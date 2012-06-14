@@ -992,10 +992,6 @@ just_had_operator_needing_term:
 		it = find_if(it, end, is_not_whitespace);
 		// Ignore ( at the end of the query string.
 		if (it == end) goto done;
-		if (prev > ' ' && strchr("()+-", prev) == NULL) {
-		    // Or if not after whitespace or a bracket or '+' or '-'.
-		    break;
-		}
 		if (*it == ')') {
 		    // Ignore empty ().
 		    newprev = *it++;
