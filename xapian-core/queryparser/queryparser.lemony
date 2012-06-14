@@ -114,6 +114,23 @@ is_positional(Xapian::Query::op op)
     return (op == Xapian::Query::OP_PHRASE || op == Xapian::Query::OP_NEAR);
 }
 
+inline bool
+is_wordchar_whitespace(unsigned ch) {
+    return is_whitespace(ch) || is_wordchar(ch);
+}
+
+inline bool
+pseudo_lovehate_checker(Utf8Iterator it)
+{
+    Utf8Iterator end;
+    Utf8Iterator wordchar_or_whitespace = find_if(it, end, is_wordchar_whitespace);
+
+    if (wordchar_or_whitespace == end || is_whitespace(*wordchar_or_whitespace)) {
+	return true;
+    }
+    return false;
+}
+
 /// A structure identifying a group of filter terms or a value range.
 struct filter_group_id {
     /** The prefix info for boolean filter terms.
@@ -891,7 +908,8 @@ just_had_operator_needing_term:
 		    // Or if not after whitespace or an open bracket.
 		    break;
 		}
-		if (is_whitespace(*it) || *it == '+' || *it == '-') {
+		if (is_whitespace(*it) || *it == '+' || *it == '-'  || pseudo_lovehate_checker(it)) {
+		    // Ignore + or - followed by only non-word characters
 		    // Ignore + or - followed by a space, or further + or -.
 		    // Postfix + (such as in C++ and H+) is handled as part of
 		    // the term lexing code in parse_term().
