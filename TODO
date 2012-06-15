@@ -65,3 +65,8 @@ Task - 2 : Initially made some suggestions about the possible additions in
            emoticon.cc.
            ALl the details are present in plain text file -
            report/solutions.txt
+
+           Added testcases in queryparsertest.cc for the solutions proposed
+           in report/solutions.txt, except for emoticon extractor. A few
+           sample testcases for emoticon extractor are already present in
+           the end of the file report/emoticon.cc.
