@@ -2573,6 +2573,258 @@ static bool test_qp_defaultstrategysome1()
     return true;
 }
 
+static const test test_unmatchedbrackets_queries[] = {
+    { "euro cup (2012) (arrives", "(((Zeuro@1 OR Zcup@2) OR 2012@3) OR Zarriv@4)" },
+    { "a AND (b OR (c AND d)", "(Za@1 AND (Zb@2 OR (Zc@3 AND Zd@4)))" },
+    { "a AND (b OR (c AND d", "(Za@1 AND (Zb@2 OR (Zc@3 AND Zd@4)))" },
+    { "a AND b)", "(Za@1 AND Zb@2)" },
+    { "chrome (new version))", "(Zchrome@1 OR (Znew@2 OR Zversion@3))" },
+    { "a) AND (b OR (c NEAR d) AND (x XOR y", "(Za@1 AND (Zb@2 OR ((c@3 NEAR 11 d@4) AND (Zx@5 XOR Zy@6))))" },
+    { "asp 0x80040E14)", "(Zasp@1 OR 0x80040e14@2)" },
+    { "And at last ))))", "(and@1 OR Zat@2 OR Zlast@3)" },
+    { "can mostly cover emoticons error as well :-)", "(Zcan@1 OR Zmost@2 OR Zcover@3 OR Zemoticon@4 OR Zerror@5 OR Zas@6 OR Zwell@7)" },
+    { "This was (a real improvement)))", "((this@1 OR Zwas@2) OR (Za@3 OR Zreal@4 OR Zimprov@5))" },
+    { "random)) query (for testing)) ((((the) error (of)) ((unmatched) brackets(", "(((Zrandom@1 OR Zqueri@2) OR (Zfor@3 OR Ztest@4)) OR (((Zthe@5 OR Zerror@6) OR Zof@7) OR (Zunmatch@8 OR brackets@9)))" },
+    { "There) is not (determinstic (way (to tell)))) whether to (((((drop or add)() the brackets)))", "((((there@1 OR (Zis@2 OR Znot@3)) OR (Zdeterminst@4 OR (Zway@5 OR (Zto@6 OR Ztell@7)))) OR (Zwhether@8 OR Zto@9)) OR ((Zdrop@10 OR Zor@11 OR Zadd@12) OR (Zthe@13 OR Zbracket@14)))" },
+    { NULL, NULL }
+};
+
+static bool test_qp_errorrecovery_unmatchedbrackets()
+{
+    Xapian::QueryParser qp;
+    qp.set_stemmer(Xapian::Stem("english"));
+    qp.set_stemming_strategy(Xapian::QueryParser::STEM_SOME);
+    for (const test *p = test_unmatchedbrackets_queries; p->query; ++p) {
+	string expect, parsed;
+	if (p->expect)
+	    expect = p->expect;
+	else
+	    expect = "parse error";
+	try {
+	    Xapian::Query qobj = qp.parse_query(p->query);
+	    parsed = qobj.get_description();
+	    expect = string("Query(") + expect + ')';
+	} catch (const Xapian::QueryParserError &e) {
+	    parsed = e.get_msg();
+	} catch (const Xapian::Error &e) {
+	    parsed = e.get_description();
+	} catch (...) {
+	    parsed = "Unknown exception!";
+	}
+	tout << "Query: " << p->query << '\n';
+	TEST_STRINGS_EQUAL(parsed, expect);
+    }
+    return true;
+}
+
+static const test test_ignorebrackets_queries[] = {
+    { "find (*^)", "Zfind@1" },
+    { "(./) chmod.sh", "(chmod@1 PHRASE 2 sh@2)" },
+    { "rm (*~)", "Zrm@1" },
+    { "mv (.*)", "Zmv@1" },
+    { "make (#)", "Zmake@1" },
+    { "(>>>>>another crazy<<<<<) ([[*]]) query (*^^^%@##@#)", "((Zanoth@1 OR crazy@2) OR Zqueri@3)" },
+    { "here brackets should not be ignored (./r)", "((Zhere@1 OR Zbracket@2 OR Zshould@3 OR Znot@4 OR Zbe@5 OR Zignor@6) OR Zr@7)" },
+    { "find (*.py)", "(Zfind@1 OR Zpy@2)" },
+    { "mysql count (*)", "(Zmysql@1 OR Zcount@2)" },
+    { "automatisch op All Flis (*.*)", "(Zautomatisch@1 OR Zop@2 OR all@3 OR flis@4)" },
+    { "preg_replace (.*?)", "Zpreg_replac@1" },
+    { "this is a random (^%#@@><>) query", "((Zthis@1 OR Zis@2 OR Za@3 OR Zrandom@4) OR Zqueri@5)" },
+    { "(>>>>>>>>random) query (random<<<<<<) query (r./)", "((((Zrandom@1 OR Zqueri@2) OR random@3) OR Zqueri@4) OR Zr@5)" },
+    { NULL, NULL }
+};
+
+static bool test_qp_errorrecovery_ignorebrackets()
+{
+    Xapian::QueryParser qp;
+    qp.set_stemmer(Xapian::Stem("english"));
+    qp.set_stemming_strategy(Xapian::QueryParser::STEM_SOME);
+    for (const test *p = test_ignorebrackets_queries; p->query; ++p) {
+	string expect, parsed;
+	if (p->expect)
+	    expect = p->expect;
+	else
+	    expect = "parse error";
+	try {
+	    Xapian::Query qobj = qp.parse_query(p->query);
+	    parsed = qobj.get_description();
+	    expect = string("Query(") + expect + ')';
+	} catch (const Xapian::QueryParserError &e) {
+	    parsed = e.get_msg();
+	} catch (const Xapian::Error &e) {
+	    parsed = e.get_description();
+	} catch (...) {
+	    parsed = "Unknown exception!";
+	}
+	tout << "Query: " << p->query << '\n';
+	TEST_STRINGS_EQUAL(parsed, expect);
+    }
+    return true;
+}
+
+static const test test_dontignorebra_queries[] = {
+    { "new mail()", "(Znew@1 OR mail@2)" },
+    { "latest version(3.0.1)", "((Zlatest@1 OR version@2) OR 3.0.1@3)" },
+    { "localtime(time(NULL))", "(localtime@1 OR (time@2 OR null@3))" },
+    { "Server.CreateObject(\"ADODB.connection\")", "((server@1 PHRASE 2 createobject@2) OR (adodb@3 PHRASE 2 connection@4))" },
+    { "Warning: stat failed for fotos(errno=2 - No such file or directory)", "((warning@1 OR (Zstat@2 OR Zfail@3 OR Zfor@4 OR fotos@5)) OR ((errno@6 OR 2@7) OR (no@8 OR Zsuch@9 OR Zfile@10 OR Zor@11 OR Zdirectori@12)))" },
+    { "a AND b OR(c NEAR d)", "((Za@1 AND Zb@2) OR (c@3 NEAR 11 d@4))" },
+    { "a AND b OR (c NEAR d)", "((Za@1 AND Zb@2) OR (c@3 NEAR 11 d@4))" },
+    { "while(true) find(*.py)", "(((while@1 OR Ztrue@2) OR find@3) OR Zpy@4)" },
+    { "parent.document.getElementById(\"leftmenu\").cols", "(((parent@1 PHRASE 3 document@2 PHRASE 3 getelementbyid@3) OR leftmenu@4) OR Zcol@5)" },
+    { "isEmpty( ) functie in visual basic", "(isempty@1 OR (Zfuncti@2 OR Zin@3 OR Zvisual@4 OR Zbasic@5))" },
+    { NULL, NULL }
+};
+
+static bool test_qp_errorrecovery_dontignorebra()
+{
+    Xapian::QueryParser qp;
+    qp.set_stemmer(Xapian::Stem("english"));
+    qp.set_stemming_strategy(Xapian::QueryParser::STEM_SOME);
+    for (const test *p = test_dontignorebra_queries; p->query; ++p) {
+	string expect, parsed;
+	if (p->expect)
+	    expect = p->expect;
+	else
+	    expect = "parse error";
+	try {
+	    Xapian::Query qobj = qp.parse_query(p->query);
+	    parsed = qobj.get_description();
+	    expect = string("Query(") + expect + ')';
+	} catch (const Xapian::QueryParserError &e) {
+	    parsed = e.get_msg();
+	} catch (const Xapian::Error &e) {
+	    parsed = e.get_description();
+	} catch (...) {
+	    parsed = "Unknown exception!";
+	}
+	tout << "Query: " << p->query << '\n';
+	TEST_STRINGS_EQUAL(parsed, expect);
+    }
+    return true;
+}
+
+static const test test_ignorequotes_queries[] = {
+    { "\"~\" home", "Zhome@1" },
+    { "\"+/-\" query", "Zqueri@1" },
+    { "either \"+\" or \"-\"", "(Zeither@1 OR Zor@2)" },
+    { "here the quotes should not be ignored \"****---+++new file saved\"", "((Zhere@1 OR Zthe@2 OR Zquot@3 OR Zshould@4 OR Znot@5 OR Zbe@6 OR Zignor@7) OR (new@8 PHRASE 3 file@9 PHRASE 3 saved@10))" },
+    { "random \"^%#@@><>\" query", "(Zrandom@1 OR Zqueri@2)" },
+    { "testing \"..//..//\"", "Ztest@1" },
+    { NULL, NULL }
+};
+
+static bool test_qp_errorrecovery_ignorequotes()
+{
+    Xapian::QueryParser qp;
+    qp.set_stemmer(Xapian::Stem("english"));
+    qp.set_stemming_strategy(Xapian::QueryParser::STEM_SOME);
+    for (const test *p = test_ignorequotes_queries; p->query; ++p) {
+	string expect, parsed;
+	if (p->expect)
+	    expect = p->expect;
+	else
+	    expect = "parse error";
+	try {
+	    Xapian::Query qobj = qp.parse_query(p->query);
+	    parsed = qobj.get_description();
+	    expect = string("Query(") + expect + ')';
+	} catch (const Xapian::QueryParserError &e) {
+	    parsed = e.get_msg();
+	} catch (const Xapian::Error &e) {
+	    parsed = e.get_description();
+	} catch (...) {
+	    parsed = "Unknown exception!";
+	}
+	tout << "Query: " << p->query << '\n';
+	TEST_STRINGS_EQUAL(parsed, expect);
+    }
+    return true;
+}
+
+static const test test_ignorelovehate_queries[] = {
+    { "php +..", "Zphp@1" },
+    { "+/- xapian", "Zxapian@1" },
+    { "xapian -> pointer", "(Zxapian@1 OR Zpointer@2)" },
+    { "rewritable -[]", "Zrewrit@1" },
+    { "is the right way -> or * or +>", "(((Zis@1 OR Zthe@2 OR Zright@3 OR Zway@4) OR Zor@5) OR Zor@6)" },
+    { "random test +^%#?:' for the error -%# of LOVE ++++ and HATE -----", "((((Zrandom@1 OR Ztest@2) OR (Zfor@3 OR Zthe@4 OR Zerror@5)) OR (Zof@6 OR love@7)) OR (Zand@8 OR hate@9))" },
+    { "chrome +#! new version", "(Zchrome@1 OR (Znew@2 OR Zversion@3))" },
+    { "man -? help", "(Zman@1 OR Zhelp@2)" },
+    { "help with man -* options", "((Zhelp@1 OR Zwith@2 OR Zman@3) OR Zoption@4)" },
+    { "the last word in this query should not be hated -!! testword", "((Zthe@1 OR Zlast@2 OR Zword@3 OR Zin@4 OR Zthis@5 OR Zqueri@6 OR Zshould@7 OR Znot@8 OR Zbe@9 OR Zhate@10) OR Ztestword@11)" },
+    { NULL, NULL }
+};
+
+static bool test_qp_errorrecovery_ignorelovehate()
+{
+    Xapian::QueryParser qp;
+    qp.set_stemmer(Xapian::Stem("english"));
+    qp.set_stemming_strategy(Xapian::QueryParser::STEM_SOME);
+    for (const test *p = test_ignorelovehate_queries; p->query; ++p) {
+	string expect, parsed;
+	if (p->expect)
+	    expect = p->expect;
+	else
+	    expect = "parse error";
+	try {
+	    Xapian::Query qobj = qp.parse_query(p->query);
+	    parsed = qobj.get_description();
+	    expect = string("Query(") + expect + ')';
+	} catch (const Xapian::QueryParserError &e) {
+	    parsed = e.get_msg();
+	} catch (const Xapian::Error &e) {
+	    parsed = e.get_description();
+	} catch (...) {
+	    parsed = "Unknown exception!";
+	}
+	tout << "Query: " << p->query << '\n';
+	TEST_STRINGS_EQUAL(parsed, expect);
+    }
+    return true;
+}
+
+static const test test_hatemessage_queries[] = {
+    { "(-google)", "Syntax Error: Can't just HATE a term.\n Did you meant to use the HATE query? \nIf not, try removing '-'or giving space after '-'" },
+    { "latest watches (-titan)", "Syntax Error: Can't just HATE a term.\n Did you meant to use the HATE query? \nIf not, try removing '-'or giving space after '-'" },
+    { "remote_smtp defer (-44)", "Syntax Error: Can't just HATE a term.\n Did you meant to use the HATE query? \nIf not, try removing '-'or giving space after '-'" },
+    { "sql server install fails error code (-1)", "Syntax Error: Can't just HATE a term.\n Did you meant to use the HATE query? \nIf not, try removing '-'or giving space after '-'" },
+    { "(testing -12)", "(Ztest@1 AND_NOT 12@2)" },
+    { "testing -12", "(Ztest@1 AND_NOT 12@2)" },
+    { "testing (-12)", "Syntax Error: Can't just HATE a term.\n Did you meant to use the HATE query? \nIf not, try removing '-'or giving space after '-'" },
+    { "testing (- 12)", "(Ztest@1 OR 12@2)" },
+    { "testing (12)", "(Ztest@1 OR 12@2)" },
+    { NULL, NULL }
+};
+
+static bool test_qp_errorrecovery_hatemessage()
+{
+    Xapian::QueryParser qp;
+    qp.set_stemmer(Xapian::Stem("english"));
+    qp.set_stemming_strategy(Xapian::QueryParser::STEM_SOME);
+    for (const test *p = test_hatemessage_queries; p->query; ++p) {
+	string expect, parsed;
+	if (p->expect)
+	    expect = p->expect;
+	else
+	    expect = "parse error";
+	try {
+	    Xapian::Query qobj = qp.parse_query(p->query);
+	    parsed = qobj.get_description();
+	    expect = string("Query(") + expect + ')';
+	} catch (const Xapian::QueryParserError &e) {
+	    parsed = e.get_msg();
+	} catch (const Xapian::Error &e) {
+	    parsed = e.get_description();
+	} catch (...) {
+	    parsed = "Unknown exception!";
+	}
+	tout << "Query: " << p->query << '\n';
+	TEST_STRINGS_EQUAL(parsed, expect);
+    }
+    return true;
+}
+
 /// Test cases for the QueryParser.
 static const test_desc tests[] = {
     TESTCASE(queryparser1),
@@ -2613,6 +2865,12 @@ static const test_desc tests[] = {
     TESTCASE(qp_default_op2),
     TESTCASE(qp_default_op3),
     TESTCASE(qp_defaultstrategysome1),
+    TESTCASE(qp_errorrecovery_unmatchedbrackets),
+    TESTCASE(qp_errorrecovery_ignorebrackets),
+    TESTCASE(qp_errorrecovery_dontignorebra),
+    TESTCASE(qp_errorrecovery_ignorequotes),
+    TESTCASE(qp_errorrecovery_ignorelovehate),
+    TESTCASE(qp_errorrecovery_hatemessage),
     END_OF_TESTCASES
 };
 
