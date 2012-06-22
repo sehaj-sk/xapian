@@ -172,10 +172,7 @@ pseudo_lovehate_checker(Utf8Iterator it)
     Utf8Iterator end;
     Utf8Iterator wordchar_or_whitespace = find_if(it, end, is_wordchar_whitespace);
 
-    if (wordchar_or_whitespace == end || is_whitespace(*wordchar_or_whitespace)) {
-	return true;
-    }
-    return false;
+    return wordchar_or_whitespace == end || is_whitespace(*wordchar_or_whitespace);
 }
 
 /// A structure identifying a group of filter terms or a value range.
@@ -963,8 +960,9 @@ just_had_operator_needing_term:
 		    break;
 		}
 		if (is_whitespace(*it) || *it == '+' || *it == '-'  || pseudo_lovehate_checker(it)) {
-		    // Ignore + or - followed by only non-word characters
-		    // Ignore + or - followed by a space, or further + or -.
+		    // Ignore + or - followed by a space, or further + or -,
+		    // or if there are only non-word character(s) after them till
+		    // the next whitespace or the end of query (such as "+...").
 		    // Postfix + (such as in C++ and H+) is handled as part of
 		    // the term lexing code in parse_term().
 		    newprev = *it++;
