@@ -156,7 +156,7 @@ Following are the different parse errors:
 
 
 3. Another kind of parse errors were related to the tokens LOVE and HATE. There
-   must be atleast a term after the token LOVE or HATE, since the corresponding
+   must be at least a term after the token LOVE or HATE, since the corresponding
    grammar productions are **prob ::= LOVE term.** and **prob ::= stop_prob
    LOVE term.** and similar rules for the token HATE. Thus if there is nothing
    after these tokens or if there are just character(s) (Non-word character),
@@ -195,8 +195,8 @@ Following are the different parse errors:
    but if we have the LOVE query between the brackets then it doesn't ! For
    example, the query ``(+xapian)`` parses without giving error but the query
    ``(-xapian)`` does not get parsed and gives error. 
-   The reason here is that we can't just hate terms. There needs to be atleast
-   one term which is not being heated.
+   The reason here is that we can't just hate terms. There needs to be at least
+   one term which is not being hated.
 
   
    Example Queries::
