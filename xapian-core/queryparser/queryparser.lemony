@@ -120,25 +120,6 @@ pseudo_brackets_tell(unsigned ch) {
 }
 
 inline bool
-pseudo_brackets_checker(Utf8Iterator it)
-{
-    Utf8Iterator end;
-
-    //Also check for '(' since there may be the case of nested brackets. If
-    //so, then would be better to just refer the present character as token
-    //BRA rather than iterating further to see what the case is.
-    Utf8Iterator bra_ket_wordchar = find_if(it, end, pseudo_brackets_tell);
-
-    //If Reached end or reached ')', then don't consider it as the token BRA
-    if (bra_ket_wordchar == end || *bra_ket_wordchar == ')') {
-        return true;
-    }
-
-    //Else the current character can be called the token BRA.
-    return false;
-}
-
-inline bool
 pseudo_quotes_tell(unsigned ch) {
     return is_double_quote(ch) || is_wordchar(ch);
 }
@@ -980,16 +961,22 @@ just_had_operator_needing_term:
 		    newprev = *it++;
 		    break;
 		}
-                // Ignore brackets containing only non-word characters inside them
-		if (pseudo_brackets_checker(it)) {
-		    // We have to move the iterator forward since there are
-		    // just characters between the brackets
-		    it = find_if(it, end, pseudo_brackets_tell);
-		    if (it == end) goto done;
-		    newprev = *it++;
-		    break;
-		}
 		if (mode == DEFAULT && (flags & FLAG_BOOLEAN)) {
+		    // Ignore brackets containing only non-word character(s)
+		    // inside them
+		    // Also check for '(' since there may be the case of
+		    // nested brackets. If so, then would be better to just
+		    // refer the present character as token BRA rather than
+		    // iterating further to see what the case is.
+		    Utf8Iterator bra_ket_wordchar = find_if(it, end, pseudo_brackets_tell);
+		    if (bra_ket_wordchar == end || *bra_ket_wordchar == ')') {
+			// If reached end or reached ')', then don't consider
+			// it as the token BRA and move the iterator forwards.
+		        it = bra_ket_wordchar;
+		        if (it == end) goto done;
+		        newprev = *it++;
+		        break;
+		    }
 		    prefix_stack.push_back(prefix_stack.back());
 		    Parse(pParser, BRA, NULL, &state);
 		}
