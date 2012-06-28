@@ -2600,24 +2600,24 @@ static bool test_qp_errorrecovery_unmatchedbrackets()
     qp.set_stemming_strategy(Xapian::QueryParser::STEM_SOME);
     qp.add_prefix("site","S");
     for (const test *p = test_unmatchedbrackets_queries; p->query; ++p) {
-	string expect, parsed;
-	if (p->expect)
-	    expect = p->expect;
-	else
-	    expect = "parse error";
-	try {
-	    Xapian::Query qobj = qp.parse_query(p->query);
-	    parsed = qobj.get_description();
-	    expect = string("Query(") + expect + ')';
-	} catch (const Xapian::QueryParserError &e) {
-	    parsed = e.get_msg();
-	} catch (const Xapian::Error &e) {
-	    parsed = e.get_description();
-	} catch (...) {
-	    parsed = "Unknown exception!";
-	}
-	tout << "Query: " << p->query << '\n';
-	TEST_STRINGS_EQUAL(parsed, expect);
+        string expect, parsed;
+        if (p->expect)
+            expect = p->expect;
+        else
+            expect = "parse error";
+        try {
+            Xapian::Query qobj = qp.parse_query(p->query);
+            parsed = qobj.get_description();
+            expect = string("Query(") + expect + ')';
+        } catch (const Xapian::QueryParserError &e) {
+            parsed = e.get_msg();
+        } catch (const Xapian::Error &e) {
+            parsed = e.get_description();
+        } catch (...) {
+            parsed = "Unknown exception!";
+        }
+        tout << "Query: " << p->query << '\n';
+        TEST_STRINGS_EQUAL(parsed, expect);
     }
     return true;
 }
@@ -2641,24 +2641,24 @@ static bool test_qp_errorrecovery_ignorebrackets()
     qp.set_stemmer(Xapian::Stem("english"));
     qp.set_stemming_strategy(Xapian::QueryParser::STEM_SOME);
     for (const test *p = test_ignorebrackets_queries; p->query; ++p) {
-	string expect, parsed;
-	if (p->expect)
-	    expect = p->expect;
-	else
-	    expect = "parse error";
-	try {
-	    Xapian::Query qobj = qp.parse_query(p->query);
-	    parsed = qobj.get_description();
-	    expect = string("Query(") + expect + ')';
-	} catch (const Xapian::QueryParserError &e) {
-	    parsed = e.get_msg();
-	} catch (const Xapian::Error &e) {
-	    parsed = e.get_description();
-	} catch (...) {
-	    parsed = "Unknown exception!";
-	}
-	tout << "Query: " << p->query << '\n';
-	TEST_STRINGS_EQUAL(parsed, expect);
+        string expect, parsed;
+        if (p->expect)
+            expect = p->expect;
+        else
+            expect = "parse error";
+        try {
+            Xapian::Query qobj = qp.parse_query(p->query);
+            parsed = qobj.get_description();
+            expect = string("Query(") + expect + ')';
+        } catch (const Xapian::QueryParserError &e) {
+            parsed = e.get_msg();
+        } catch (const Xapian::Error &e) {
+            parsed = e.get_description();
+        } catch (...) {
+            parsed = "Unknown exception!";
+        }
+        tout << "Query: " << p->query << '\n';
+        TEST_STRINGS_EQUAL(parsed, expect);
     }
     return true;
 }
@@ -2682,24 +2682,24 @@ static bool test_qp_errorrecovery_dontignorebra()
     qp.set_stemmer(Xapian::Stem("english"));
     qp.set_stemming_strategy(Xapian::QueryParser::STEM_SOME);
     for (const test *p = test_dontignorebra_queries; p->query; ++p) {
-	string expect, parsed;
-	if (p->expect)
-	    expect = p->expect;
-	else
-	    expect = "parse error";
-	try {
-	    Xapian::Query qobj = qp.parse_query(p->query);
-	    parsed = qobj.get_description();
-	    expect = string("Query(") + expect + ')';
-	} catch (const Xapian::QueryParserError &e) {
-	    parsed = e.get_msg();
-	} catch (const Xapian::Error &e) {
-	    parsed = e.get_description();
-	} catch (...) {
-	    parsed = "Unknown exception!";
-	}
-	tout << "Query: " << p->query << '\n';
-	TEST_STRINGS_EQUAL(parsed, expect);
+        string expect, parsed;
+        if (p->expect)
+            expect = p->expect;
+        else
+            expect = "parse error";
+        try {
+            Xapian::Query qobj = qp.parse_query(p->query);
+            parsed = qobj.get_description();
+            expect = string("Query(") + expect + ')';
+        } catch (const Xapian::QueryParserError &e) {
+            parsed = e.get_msg();
+        } catch (const Xapian::Error &e) {
+            parsed = e.get_description();
+        } catch (...) {
+            parsed = "Unknown exception!";
+        }
+        tout << "Query: " << p->query << '\n';
+        TEST_STRINGS_EQUAL(parsed, expect);
     }
     return true;
 }
@@ -2721,24 +2721,24 @@ static bool test_qp_errorrecovery_ignorequotes()
     qp.set_stemmer(Xapian::Stem("english"));
     qp.set_stemming_strategy(Xapian::QueryParser::STEM_SOME);
     for (const test *p = test_ignorequotes_queries; p->query; ++p) {
-	string expect, parsed;
-	if (p->expect)
-	    expect = p->expect;
-	else
-	    expect = "parse error";
-	try {
-	    Xapian::Query qobj = qp.parse_query(p->query);
-	    parsed = qobj.get_description();
-	    expect = string("Query(") + expect + ')';
-	} catch (const Xapian::QueryParserError &e) {
-	    parsed = e.get_msg();
-	} catch (const Xapian::Error &e) {
-	    parsed = e.get_description();
-	} catch (...) {
-	    parsed = "Unknown exception!";
-	}
-	tout << "Query: " << p->query << '\n';
-	TEST_STRINGS_EQUAL(parsed, expect);
+        string expect, parsed;
+        if (p->expect)
+            expect = p->expect;
+        else
+            expect = "parse error";
+        try {
+            Xapian::Query qobj = qp.parse_query(p->query);
+            parsed = qobj.get_description();
+            expect = string("Query(") + expect + ')';
+        } catch (const Xapian::QueryParserError &e) {
+            parsed = e.get_msg();
+        } catch (const Xapian::Error &e) {
+            parsed = e.get_description();
+        } catch (...) {
+            parsed = "Unknown exception!";
+        }
+        tout << "Query: " << p->query << '\n';
+        TEST_STRINGS_EQUAL(parsed, expect);
     }
     return true;
 }
@@ -2763,24 +2763,24 @@ static bool test_qp_errorrecovery_ignorelovehate()
     qp.set_stemmer(Xapian::Stem("english"));
     qp.set_stemming_strategy(Xapian::QueryParser::STEM_SOME);
     for (const test *p = test_ignorelovehate_queries; p->query; ++p) {
-	string expect, parsed;
-	if (p->expect)
-	    expect = p->expect;
-	else
-	    expect = "parse error";
-	try {
-	    Xapian::Query qobj = qp.parse_query(p->query);
-	    parsed = qobj.get_description();
-	    expect = string("Query(") + expect + ')';
-	} catch (const Xapian::QueryParserError &e) {
-	    parsed = e.get_msg();
-	} catch (const Xapian::Error &e) {
-	    parsed = e.get_description();
-	} catch (...) {
-	    parsed = "Unknown exception!";
-	}
-	tout << "Query: " << p->query << '\n';
-	TEST_STRINGS_EQUAL(parsed, expect);
+        string expect, parsed;
+        if (p->expect)
+            expect = p->expect;
+        else
+            expect = "parse error";
+        try {
+            Xapian::Query qobj = qp.parse_query(p->query);
+            parsed = qobj.get_description();
+            expect = string("Query(") + expect + ')';
+        } catch (const Xapian::QueryParserError &e) {
+            parsed = e.get_msg();
+        } catch (const Xapian::Error &e) {
+            parsed = e.get_description();
+        } catch (...) {
+            parsed = "Unknown exception!";
+        }
+        tout << "Query: " << p->query << '\n';
+        TEST_STRINGS_EQUAL(parsed, expect);
     }
     return true;
 }
@@ -2814,24 +2814,24 @@ static bool test_qp_errorrecovery_hatemessage()
     qp.set_stemmer(Xapian::Stem("english"));
     qp.set_stemming_strategy(Xapian::QueryParser::STEM_SOME);
     for (const test *p = test_hatemessage_queries; p->query; ++p) {
-	string expect, parsed;
-	if (p->expect)
-	    expect = p->expect;
-	else
-	    expect = "parse error";
-	try {
-	    Xapian::Query qobj = qp.parse_query(p->query);
-	    parsed = qobj.get_description();
-	    expect = string("Query(") + expect + ')';
-	} catch (const Xapian::QueryParserError &e) {
-	    parsed = e.get_msg();
-	} catch (const Xapian::Error &e) {
-	    parsed = e.get_description();
-	} catch (...) {
-	    parsed = "Unknown exception!";
-	}
-	tout << "Query: " << p->query << '\n';
-	TEST_STRINGS_EQUAL(parsed, expect);
+        string expect, parsed;
+        if (p->expect)
+            expect = p->expect;
+        else
+            expect = "parse error";
+        try {
+            Xapian::Query qobj = qp.parse_query(p->query);
+            parsed = qobj.get_description();
+            expect = string("Query(") + expect + ')';
+        } catch (const Xapian::QueryParserError &e) {
+            parsed = e.get_msg();
+        } catch (const Xapian::Error &e) {
+            parsed = e.get_description();
+        } catch (...) {
+            parsed = "Unknown exception!";
+        }
+        tout << "Query: " << p->query << '\n';
+        TEST_STRINGS_EQUAL(parsed, expect);
     }
     return true;
 }

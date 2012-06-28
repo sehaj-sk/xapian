@@ -899,30 +899,31 @@ just_had_operator_needing_term:
 		    // Skip whitespace.
 		    it = find_if(it, end, is_not_whitespace);
 		    if (it == end) {
-			// Ignore an unmatched " at the end of the query to
-			// avoid generating an empty pair of QUOTEs which will
-			// cause a parse error.
-			goto done;
+		        // Ignore an unmatched " at the end of the query to
+		        // avoid generating an empty pair of QUOTEs which will
+		        // cause a parse error.
+		        goto done;
 		    }
 		    if (is_double_quote(*it)) {
-			// Ignore empty "" (but only if we're not already
-			// IN_QUOTES as we don't merge two adjacent quoted
-			// phrases!)
-			newprev = *it++;
-			break;
+		        // Ignore empty "" (but only if we're not already
+		        // IN_QUOTES as we don't merge two adjacent quoted
+		        // phrases!)
+		        newprev = *it++;
+		        break;
 		    }
 		    // Ignore quotes containing only non-word character(s)
 		    // inside them
 		    // Can't count for nested quotes here since the character
 		    // for opening as well as closing quotes is same - '"' !
 		    Utf8Iterator quote_or_wordchar = find_if(it, end, pseudo_quotes_tell);
+
 		    if (quote_or_wordchar == end || is_double_quote(*quote_or_wordchar)) {
-			// If reached end or reached '"', then don't consider
-			// it as the token QUOTE and move the iterator forwards.
-			it = quote_or_wordchar;
-			if (it == end) goto done;
-			newprev = *it++;
-			break;
+		        // If reached end or reached '"', then don't consider
+		        // it as the token QUOTE and move the iterator forwards.
+		        it = quote_or_wordchar;
+		        if (it == end) goto done;
+		        newprev = *it++;
+		        break;
 		    }
 		}
 		if (flags & QueryParser::FLAG_PHRASE) {
@@ -994,9 +995,10 @@ just_had_operator_needing_term:
 		    // refer the present character as token BRA rather than
 		    // iterating further to see what the case is.
 		    Utf8Iterator bra_ket_wordchar = find_if(it, end, pseudo_brackets_tell);
+
 		    if (bra_ket_wordchar == end || *bra_ket_wordchar == ')') {
-			// If reached end or reached ')', then don't consider
-			// it as the token BRA and move the iterator forwards.
+		        // If reached end or reached ')', then don't consider
+		        // it as the token BRA and move the iterator forwards.
 		        it = bra_ket_wordchar;
 		        if (it == end) goto done;
 		        newprev = *it++;
