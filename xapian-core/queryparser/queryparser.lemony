@@ -138,6 +138,25 @@ pseudo_lovehate_checker(Utf8Iterator it)
     return wordchar_or_whitespace == end || is_whitespace(*wordchar_or_whitespace);
 }
 
+inline bool
+is_nonnumeral_whitespace(unsigned ch) {
+    return is_whitespace(ch) || (!is_digit(ch) && is_wordchar(ch));
+}
+
+inline bool
+is_numeral(Utf8Iterator it)
+{
+    Utf8Iterator end;
+    // We just check that while iterating, we detect a white-space first or a
+    // non-digit wordchar. Note that here we are not trying to find what the
+    // numeral is. We are just checking whether after '+'/'-', is there a
+    // numeral or not. Hence we don't need to worry about ','
+    // (such as in "-3,000") or '.' (such as in"-3.14") or any other non-word
+    // character.
+    Utf8Iterator p = find_if(it, end, is_nonnumeral_whitespace);
+    return p == end || is_whitespace(*p);
+}
+
 /// A structure identifying a group of filter terms or a value range.
 struct filter_group_id {
     /** The prefix info for boolean filter terms.
@@ -936,15 +955,21 @@ just_had_operator_needing_term:
 		    break;
 		}
 		if (mode == DEFAULT && (flags & FLAG_LOVEHATE)) {
-		    int token;
-		    if (ch == '+') {
-			token = LOVE;
-		    } else if (last_was_operator) {
-			token = HATE_AFTER_AND;
-		    } else {
-			token = HATE;
+		    // If followed by numeral, then don't consider as the
+		    // token LOVE/HATE. But take care that if there is a
+		    // quote or '(' after '+'/'-', then treat them as
+		    // LOVE/HATE only.
+		    if (is_double_quote(*it) || *it == '(' || !is_numeral(it)) {
+		        int token;
+		        if (ch == '+') {
+		            token = LOVE;
+		        } else if (last_was_operator) {
+		            token = HATE_AFTER_AND;
+		        } else {
+		            token = HATE;
+		        }
+		        Parse(pParser, token, NULL, &state);
 		    }
-		    Parse(pParser, token, NULL, &state);
 		    goto just_had_operator_needing_term;
 		}
 		// Need to prevent the term after a LOVE or HATE starting a
