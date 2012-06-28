@@ -2789,16 +2789,22 @@ static const test test_hatemessage_queries[] = {
     { "(-google)", "Syntax Error: Can't just HATE a term. Either remove '-' or give some non-hated term(s)."},
     // FIXME: Should we ignore '(' and ')' in the following query?
     { "latest watches (-titan)", "Syntax Error: Can't just HATE a term. Either remove '-' or give some non-hated term(s)."},
-    // FIXME: How to take care of negative numbers? (If for negative numbers
-    // like "-44", we don't treat '-' as the token HATE, then what if user
-    // actually wants to HATE a number?)
-    { "remote_smtp defer (-44)", "Syntax Error: Can't just HATE a term. Either remove '-' or give some non-hated term(s)." },
-    { "sql server install fails error code (-1)", "Syntax Error: Can't just HATE a term. Either remove '-' or give some non-hated term(s)." },
-    { "(testing -12)", "(Ztest@1 AND_NOT 12@2)" },
-    { "testing -12", "(Ztest@1 AND_NOT 12@2)" },
-    { "testing (-12)", "Syntax Error: Can't just HATE a term. Either remove '-' or give some non-hated term(s)." },
-    { "testing (- 12)", "(Ztest@1 OR 12@2)" },
-    { "testing (12)", "(Ztest@1 OR 12@2)" },
+    // Following examples show how '+'/'-' are not treated as LOVE/HATE
+    // if they are followed by numeral. This allows us to make sure that
+    // negative numbers are not interpreted as numbers being hated.
+    { "foo -10", "(Zfoo@1 OR 10@2)" },
+    { "foo (-10)", "(Zfoo@1 OR 10@2)" },
+    { "foo (+10)", "(Zfoo@1 OR 10@2)" },
+    { "foo (10)", "(Zfoo@1 OR 10@2)" },
+    { "foo (-10, -20)", "(Zfoo@1 OR (10@2 OR 20@3))" },
+    { "foo (-10, name)", "(Zfoo@1 OR (10@2 OR Zname@3))" },
+    { "foo (name, -10)", "(Zfoo@1 OR (Zname@2 OR 10@3))" },
+    { "foo (-3.14)", "(Zfoo@1 OR 3.14@2)" },
+    { "foo (-3,000)", "(Zfoo@1 OR 3,000@2)" },
+    // In the following query, the numeral should be hated.
+    { "foo -\"10\"", "(Zfoo@1 AND_NOT 10@2)" },
+    // In the following query the part inside brackets should be hated.
+    { "xapian -(10 google)", "(Zxapian@1 AND_NOT (10@2 OR Zgoogl@3))" },
     { NULL, NULL }
 };
 
