@@ -1,72 +1,134 @@
-Task - 1 : Understanding and making the documentation
-           Have added the doc in /xapian-core/docs folder with name as
-           "queryparser_new.rst"
+Got acquainted with the source code of Termgenerator and QueryParser and
+the use of Lemon Parser Generator.
 
-Task - 2 : Initially made some suggestions about the possible additions in
-           Xapian QueryParser syntax on the basis of syntax which were
-           available in other places. The file is placed in
-           xapian-core/queryparser folder with name as "suggestions.rst".
+Made the documentation of QueryParser in Wiki Format.
 
-           Then as Olly suggested, devoted quite some time to see what happens
-           to the real world queries present in queryparsertest.cc once,
-           after disabling the “re-parse with fags off” code. Made a
-           list of the queries which gave error. There were around 130 or
-           so such queries.
-           The files are placed in a new folder named "report" present in the
-           main directory with the name of files - "error_report_details.txt"
-           and "summary.txt".
-           Have made two plain text files -
+Learned about reStructuredText i.e. rst format.
 
-           1st one (named "error_report_details.txt", is quite a big file,
-           with all the plain text) contains
-           all the queries
-           from the real-world queries present in queryparsertest.cc which
-           gave error
-           while disabling the re-parse with no flags code., in order of
-           their appearance
-           in queryparsertest.cc.  With each query, following things are
-           mentioned -
+Transferred the documentation to rst and pushed it to the branch at
+xapian-core/docs/queryparser_new.rst.
 
+Made appropriate changes in the documentation as per the reviews given.
+
+Explored the general syntax available in other search engines and on the basis
+of comparison with current Xapian Query Syntax, proposed some suggestions
+for new features. The file is placed at xapian-core/queryparser/suggestions.rst
+
+
+As Olly suggested, devoted quite some time to see what happens to the
+real world queries present in queryparsertest.cc once, after disabling the
+“re-parse with fags off” code. Made a list of the queries which gave
+error. There were around 130 or so such queries. The files are placed in a new
+folder named "report" present in the main directory with the name of files -
+"error_report_details.txt" and "summary.txt". Have made two plain text files -
+
+     1st one (named "error_report_details.txt", is quite a big file,
+     with all the plain text) contains all the queries from the real-world
+     queries present in queryparsertest.cc which gave error while disabling
+     the re-parse with no flags code., in order of their appearance in
+     queryparsertest.cc.  With each query, following things are mentioned -
             1.  Query object returned when parsed with no flags.
             2.  The tokens produced by parsing the query with no flags
             3.  The tokens produced by parsing the query with flags
             4.  The reason of parse error for the particular query.
 
-           2nd one (named "summary.txt") is the summary file, and is small
-           too, made on the basis of
-           the 1st file. It contains the information about the parser errors,
-           grouped together along with the examples of queries which are not
-           parsed because of those parser errors.
+     2nd one (named "summary.txt") is the summary file, and is small too,
+     made on the basis of the 1st file. It contains the information about
+     the parser errors, grouped together along with the examples of queries
+     which are not parsed because of those parser errors.
 
-           Looked into the lucene source-code and got to know about the
-           lucene query syntax and its lexer and parser.
-           Found out how lucene handles the errors which were found on
-           the basis of above task (those which are mentioned in summary.txt)
-           and have written the findings in a plain text file called
-           "lucene_findings.txt" plcaed in /report.
 
-           As per the reviews mailed by Dan Colish, made chages to queryparser
-           doc (xapian-core/docs/queryparser_new.rst) to restructure it,
-           delete the non-required content and did the TODO's mentioned in
-           the diff mailed by dan.
+Looked into the lucene source-code and got to know about the lucene query
+syntax and its lexer and parser.
 
-           Formatted the summary.txt file produced earlier. It is present
-           here - report/summary.rst
+Found out how lucene handles the errors which were found on the basis of
+above task (those which are mentioned in summary.txt) and have written the
+findings in a plain text file at report/lucene_findings.txt .
 
-           Finding Solutions and testing them -
-           Made attempts to make changes in queryparser.lemony to recover
-           from parse errors mentioned in report/summary.rst Have made the
-           corresponding commits. I made the changes as well as tested them
-           on the queryparsertest.cc and on some own-made queries.
-           Broadly speeking, except for emoticons related error, the other
-           queries could be dealt with fairly easily. The corresponding
-           changes have been made in queryparser.lemony.
-           For the emoticons detection/extraction, have made a class
-           emoticon.cc.
-           ALl the details are present in plain text file -
-           report/solutions.txt
+As per the reviews mailed by Dan Colish, made chages to queryparser doc
+(xapian-core/docs/queryparser_new.rst) to restructure it, delete the
+non-required content and did the TODO's mentioned in the diff mailed by dan.
 
-           Added testcases in queryparsertest.cc for the solutions proposed
-           in report/solutions.txt, except for emoticon extractor. A few
-           sample testcases for emoticon extractor are already present in
-           the end of the file report/emoticon.cc.
+Formatted the summary.txt file produced earlier, to make a rst format file
+at report/summary.rst
+
+Wrote emoticon detector and extractor class, it is present at
+report/emoticon.cc. Also added a few sample testcases, showing the following
+details:
+     1. Input String given
+     2. New string after extracting emoticons
+     3. Number of emoticons present
+     4. List of emoticon(s) present
+
+     
+Made attempts to make changes in queryparser.lemony to recover from parse
+errors mentioned in report/summary.rst Have made the corresponding commits. I
+made the changes as well as tested them on the queryparsertest.cc and on
+some own-made queries.
+     Broadly speeking, except for emoticons related error, the other queries
+     could be dealt with fairly easily. The corresponding changes have been
+     made in queryparser.lemony. For the emoticons detection/extraction,
+     have made a class emoticon.cc. ALl the details are present in plain
+     text file - report/solutions.txt
+
+Instead of commiting the commits (which was really foolish on my part !!),
+made the corresponding changes to queryparser.lemony
+
+Added testcases in queryparsertest.cc for the solutions proposed
+in report/solutions.txt, except for emoticon extractor. A few sample
+testcases for emoticon extractor are already present in the end of the file
+report/emoticon.cc.
+
+Updated the QueryParser doc based on the reviews from Dan.
+
+Revised the timeline to come up with a revised roadmap. It is present here -
+http://trac.xapian.org/wiki/GSoC2012/QueryParser/Revised_Roadmap
+
+Added the Journal and TODOS section to put the GSoC project on right path.
+They are present repectively at -
+http://trac.xapian.org/wiki/GSoC2012/QueryParser/Journal and
+http://trac.xapian.org/wiki/GSoC2012/QueryParser/TODOS
+Would be using the wiki Journal now rather than the blog.
+
+Got acquainted with the concepts of link grammar
+via Introduction to Link Grammar Parser present at
+http://www.abisource.com/projects/link-grammar/dict/introduction.html
+
+Went through the mailing list of Link Grammar to have ideas regarding POS
+tagging. Figured out the differences and similarities between the commonly
+used Penn-treebank style of POS tagging and the links that Link Grammar
+generates. Got confused initially since the Link Grammar uses Dependency
+grammar style rather than the more common Constituency grammar style.
+
+Modified queryparser doc to correct a wrong parse and change the language
+as olly pointed out
+
+Fixed some typos in report/summary.rst and deleted the backup file from
+Github repo.
+
+Modified queryparser.lemony according to comments given by olly on earlier
+commits.
+
+Modified the testcases present in queryparsertest.cc according to comments
+given by olly.
+
+Figured out what and how to do regarding turning on/off the error recovery
+code and about giving the corrected query to user. The details are present
+at - http://trac.xapian.org/wiki/GSoC2012/QueryParser/ErrorRecovery_API
+(Discussion going on at present)
+
+Got acquainted with Link Grammar API via Link Grammar API documentation
+present at http://www.abisource.com/projects/link-grammar/api/index.html
+Also browsed the Link Grammar source code to get familiarized with the code.
+
+Explored different ways (and their Pros and Cons) in which Link Grammar can
+be used in xapian to provide POS tags.
+
+Modified queryparser.lemony to ensure that negative numbers are not hated !
+
+Added testcases to queryparsertest.cc for the handing of negative numbers.
+
+Corrected indentation at some places.
+
+Made a remote repo to keep track of the commits in the xapian main
+branch. Merged it with my working branch "mybranch".
