@@ -1,6 +1,6 @@
 
 .. Copyright (C) 2006 Lemur Consulting Ltd
-.. Copyright (C) 2007,2008,2009,2010,2011 Olly Betts
+.. Copyright (C) 2007,2008,2009,2010,2011,2012 Olly Betts
 
 .. FIXME: Once brass settles down, update this for brass
 
@@ -168,7 +168,7 @@ Be warned that Xapian is heavily I/O dependent, and therefore performance over
 a network file system is likely to be slow unless you've got a very well tuned
 setup.
 
-Xapian needs to be able to create a lock file in a database directory when
+Xapian needs to be able to lock a file in a database directory when
 modifications are being performed.  On some network files systems (e.g., NFS)
 this requires a lock daemon to be running.
 
@@ -364,6 +364,29 @@ used on a single table, for example, this command will check the termlist table
 of database "foo"::
 
   xapian-check foo/termlist.DB
+
+
+Fixing corrupted databases
+--------------------------
+
+The "xapian-check" tool is capable of fixing corrupted databases in certain
+limited situations.  Currently it only supports this for chert, where it is
+capable of:
+
+ * Regenerating a damaged ``iamchert`` file (if you've lost yours completely
+   just create an invalid one, e.g. with ``touch iamchert``).
+
+ * Regenerating damaged or lost base files from the corresponding DB files.
+   This was developed for the scenario where the database is freshly compacted
+   but should work provided the last update was cleanly applied.  If the last
+   update wasn't actually committed, then it is possible that it will try to
+   pick the root block for the partial update, which isn't what you want.
+   If you are in this situation, come and talk to us - with a testcase we
+   should be able to make it handle this better.
+
+To fix such issues, run xapian-check like so::
+
+  xapian-check /path/to/database F
 
 
 Converting a pre-1.1.4 chert database to a chert database

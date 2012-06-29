@@ -61,12 +61,12 @@ static void mktmpdir(const string & path) {
     }
 }
 
-static off_t file_size(const string & path) {
-    struct stat sb;
-    if (stat(path.c_str(), &sb)) {
+static off_t get_file_size(const string & path) {
+    off_t size = file_size(path);
+    if (errno) {
 	FAIL_TEST("Can't stat '" + path + "'");
     }
-    return sb.st_size;
+    return size;
 }
 
 static size_t do_read(int fd, char * p, size_t desired)
@@ -251,11 +251,21 @@ set_max_changesets(int count) {
 # define set_max_changesets(N) putenv(const_cast<char*>("XAPIAN_MAX_CHANGESETS="#N))
 #endif
 
+struct unset_max_changesets_helper_ {
+    unset_max_changesets_helper_() { }
+    ~unset_max_changesets_helper_() { set_max_changesets(0); }
+};
+
+// Ensure that we don't leave generation of changesets on for the next
+// testcase, even if this one exits with an exception.
+#define UNSET_MAX_CHANGESETS_AFTERWARDS unset_max_changesets_helper_ ezlxq
+
 // #######################################################################
 // # Tests start here
 
 // Basic test of replication functionality.
 DEFINE_TESTCASE(replicate1, replicas) {
+    UNSET_MAX_CHANGESETS_AFTERWARDS;
     string tempdir = ".replicatmp";
     mktmpdir(tempdir);
     string masterpath = get_named_writable_database_path("master");
@@ -328,6 +338,7 @@ DEFINE_TESTCASE(replicate1, replicas) {
 // Test replication from a replicated copy.
 DEFINE_TESTCASE(replicate2, replicas) {
     SKIP_TEST_FOR_BACKEND("brass"); // Brass doesn't currently support this.
+    UNSET_MAX_CHANGESETS_AFTERWARDS;
 
     string tempdir = ".replicatmp";
     mktmpdir(tempdir);
@@ -438,7 +449,7 @@ replicate_with_brokenness(Xapian::DatabaseMaster & master,
 
     // Try applying truncated changesets of various different lengths.
     string brokenchangesetpath = tempdir + "/changeset_broken";
-    off_t filesize = file_size(changesetpath);
+    off_t filesize = get_file_size(changesetpath);
     off_t len = 10;
     off_t copylen;
     while (len < filesize) {
@@ -467,6 +478,7 @@ replicate_with_brokenness(Xapian::DatabaseMaster & master,
 
 // Test changesets which are truncated (and therefore invalid).
 DEFINE_TESTCASE(replicate3, replicas) {
+    UNSET_MAX_CHANGESETS_AFTERWARDS;
     string tempdir = ".replicatmp";
     mktmpdir(tempdir);
     string masterpath = get_named_writable_database_path("master");
@@ -514,6 +526,7 @@ DEFINE_TESTCASE(replicate3, replicas) {
 
 // Tests for max_changesets
 DEFINE_TESTCASE(replicate4, replicas) {
+    UNSET_MAX_CHANGESETS_AFTERWARDS;
     string tempdir = ".replicatmp";
     mktmpdir(tempdir);
     string masterpath = get_named_writable_database_path("master");
@@ -605,6 +618,7 @@ DEFINE_TESTCASE(replicate4, replicas) {
 // Tests for max_changesets
 DEFINE_TESTCASE(replicate5, replicas) {
     SKIP_TEST_FOR_BACKEND("chert");
+    UNSET_MAX_CHANGESETS_AFTERWARDS;
     string tempdir = ".replicatmp";
     mktmpdir(tempdir);
     string masterpath = get_named_writable_database_path("master");

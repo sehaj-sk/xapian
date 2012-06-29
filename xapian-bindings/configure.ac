@@ -9,7 +9,7 @@ AC_INIT([xapian-bindings], [1.3.0], [http://xapian.org/bugs])
 dnl See xapian-core's HACKING document for details of the reasons for required
 dnl versions.
 AM_INIT_AUTOMAKE([1.10.1 -Wportability tar-ustar])
-AC_CONFIG_SRCDIR([xapian.i])
+AC_CONFIG_SRCDIR([xapian-headers.i])
 
 AC_CONFIG_HEADERS([config.h])
 
@@ -422,6 +422,11 @@ if test no != "$with_php" ; then
 	AC_MSG_WARN([No PHP interpreter found - PHP bindings tests will be skipped])
 	dnl The skiptest script just returns exit code 77.
 	PHP='$(top_srcdir)/skiptest'
+      else
+	AC_MSG_CHECKING([for PHP path separator])
+	PHP_PATH_SEPARATOR=`$PHP -r 'echo PATH_SEPARATOR;'`
+	AC_SUBST([PHP_PATH_SEPARATOR])
+	AC_MSG_RESULT([$PHP_PATH_SEPARATOR])
       fi
 
       case $host_os in
@@ -823,10 +828,15 @@ if test no != "$with_ruby" ; then
       if test -f "$RUBY_INC/ruby.h" ; then
 	AC_MSG_RESULT(yes)
 
-	AC_MSG_CHECKING([ruby/io.h])
+	AC_MSG_CHECKING([for ruby/io.h])
 	rm -f ruby/rubyio.h
 	if test -f "$RUBY_INC/ruby/io.h" ; then
 	  AC_MSG_RESULT(yes)
+
+	  dnl In a VPATH build, the ruby subdirectory won't exist the first
+	  dnl time.
+	  test -d ruby || mkdir ruby
+
 	  dnl Newer Ruby has ruby/io.h - older has rubyio.h.  Ruby doesn't
 	  dnl seem to provide any way to generate code which works with
 	  dnl both (and even the version number isn't a discriminator as

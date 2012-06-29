@@ -75,7 +75,12 @@ XapianSharp.snk:
 	$(SN) -k $@
 
 $(ASSEMBLY).dll: $(XAPIAN_SWIG_CS_SRCS) AssemblyInfo.cs XapianSharp.snk
+## We specify both -keyfile and -keycontainer - hopefully this means that if
+## this is the first time we're signing, the key in the file is used and
+## then stored in the key container.  From then on, the key in the container
+## is used.
 	$(CSC) -unsafe -target:library -out:$(ASSEMBLY).dll \
+	    -keyfile:XapianSharp.snk -keycontainer:"Xapian Signing Key" \
 	    `for f in $(XAPIAN_SWIG_CS_SRCS); do if test -f "$$f"; then echo $$f; else echo $(srcdir)/$$f ; fi ; done` \
 	    AssemblyInfo.cs
 
@@ -114,6 +119,8 @@ all-am: $(ASSEMBLY).dll
 CLEANFILES = XapianSharp.snk $(ASSEMBLY).dll SmokeTest.exe
 
 if MAINTAINER_MODE
+RUN_SWIG = $(PERL) '$(top_srcdir)'/swig-depcomp $(SWIG)
+
 xapian_wrap.cc xapian_wrap.h $(XAPIAN_SWIG_CS_SRCS): xapian_wrap.stamp
 	@stamp=xapian_wrap.stamp; $(make_many_locked)
 xapian_wrap.stamp:
@@ -122,15 +129,12 @@ xapian_wrap.stamp:
 	: # case where SWIG changes its mind as to which files it generates.
 	-rm -f generated-csharp/*
 	$(MKDIR_P) generated-csharp
-	$(SWIG) $(SWIG_WERROR) -I'$(srcdir)' $(SWIG_FLAGS) -c++ \
+	$(RUN_SWIG) $(SWIG_WERROR) -I'$(srcdir)' $(SWIG_FLAGS) -c++ \
 	    -csharp -namespace Xapian -module Xapian -dllimport _XapianSharp \
-	    -o xapian_wrap.cc -outdir generated-csharp \
-	    -MD -MF xapian_wrap_d.tmp '$(srcdir)/'csharp.i
-	$(PERL) -pi -e 's!xapian_wrap.cc:!xapian_wrap.stamp:!' xapian_wrap_d.tmp
-	mv xapian_wrap_d.tmp xapian_wrap.d
+	    -o xapian_wrap.cc -outdir generated-csharp '$(srcdir)/'csharp.i
 	: # Check that exactly the sources we expected were generated.
-	LANG=C ls -1 generated-csharp/*.cs > generated-csharp/list
-	$(PERL) -e 'print "$$_\n" for sort @ARGV' $(XAPIAN_SWIG_CS_SRCS)|diff - generated-csharp/list
+	$(PERL) -e 'print "$$_\n" for sort @ARGV' generated-csharp/*.cs > generated-csharp/list
+	$(PERL) -e 'print "$$_\n" for sort @ARGV' $(XAPIAN_SWIG_CS_SRCS)|diff -c - generated-csharp/list
 	$(multitarget_end)
 
 -include xapian_wrap.d
