@@ -132,3 +132,13 @@ Corrected indentation at some places.
 
 Made a remote repo to keep track of the commits in the xapian main
 branch. Merged it with my working branch "mybranch".
+
+Refractored the error recovery code and did the following changes:
+    1. Introduced a struct (parse_error_s) to encode the errors into types.
+    2. Introduced a flag, FLAG_ERROR_RECOVERY to switch off/on the error
+       recovery code.
+    3. Added two API methods: get_error_detail() and
+       get_error_description_string() to interact with the struct representing
+       the parse error types.
+    4. Modified examples/quest.cc to represent the use of
+       get_error_description_string() method.
