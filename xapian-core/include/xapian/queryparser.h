@@ -31,6 +31,7 @@
 
 #include <set>
 #include <string>
+#include <list>
 
 namespace Xapian {
 
@@ -312,6 +313,82 @@ class XAPIAN_VISIBILITY_DEFAULT NumberValueRangeProcessor : public StringValueRa
     Xapian::valueno operator()(std::string &begin, std::string &end);
 };
 
+/// Represents the types of parse error if the query fails to get parsed.
+struct  XAPIAN_VISIBILITY_DEFAULT parse_error_s {
+    /**
+     *  Represents missing opening bracket '('.
+     *
+     *  Contains a list of position(s) of closing bracket, ')' in the query,
+     *  for which no corresponding opening bracket was present. An empty
+     *  list means no such error found.
+     *
+     *  Example Query: a OR b) AND c
+     */
+    std::list<int> BRA_MISSING;
+
+    /**
+     *  Represents missing closing bracket ')'.
+     *
+     *  Contains a list of position(s) of opening bracket, '(' in the query,
+     *  for which no corresponding closing bracket was present. An empty
+     *  list means no such error found.
+     *
+     *  Example Query: a AND (b OR c
+     */
+    std::list<int> KET_MISSING;
+
+    /**
+     *  Represents ineffective LOVE, '+' since followed by only non-word
+     *  characters.
+     *
+     *  Contains a list of position(s) of such '+' in the query. An empty list
+     *  means no such error found.
+     *
+     *  Example Query:  xapian +.... google
+     */
+    std::list<int> PSEUDO_LOVE;
+
+    /**
+     *  Represents ineffective HATE, '-' since followed by only non-word
+     *  characters.
+     *
+     *  Contains a list of position(s) of such '-' in the query. An empty list
+     *  means no such error found.
+     *
+     *  Example Query:  xapian -.... google
+     */
+    std::list<int> PSEUDO_HATE;
+
+    /**
+     *  Represents ineffective brackets, containing only non-word characters
+     *  between them.
+     *
+     *  Contains a list of starting position(s) of such brackets in the query.
+     *  An empty list means no such error found.
+     *
+     *  Example Query:  xapian (....) google
+     */
+    std::list<int> PSEUDO_BRACKET;
+
+    /**
+     *  Represents ineffective quotes, containing only non-word characters
+     *  between them.
+     *
+     *  Contains a list of starting position(s) of such quotes in the query.
+     *  An empty list means no such error found.
+     *
+     *  Example Query:  xapian "...." google
+     */
+    std::list<int> PSEUDO_QUOTE;
+
+    /**
+     *  Represents a query containing only HATE term(s).
+     *
+     *  Example Query:  (-xapian)
+     */
+    bool ONLY_HATE;
+};
+
 /// Build a Xapian::Query object from a user query string.
 class XAPIAN_VISIBILITY_DEFAULT QueryParser {
   public:
@@ -407,7 +484,20 @@ class XAPIAN_VISIBILITY_DEFAULT QueryParser {
 	 *
 	 *  Added in Xapian 1.0.11.
 	 */
-	FLAG_DEFAULT = FLAG_PHRASE|FLAG_BOOLEAN|FLAG_LOVEHATE
+
+	 /** Enable automatic use of error recovery.
+	  *
+	  *  This flags determines whether the parser automatically corrects the
+	  *  query or not. If there are errors in the query, then suggestions are
+	  *  made in corrected_string (callable via get_corrected_query_string()
+	  *  method) ) irrespective of whether this flag is enabled or not.
+	  *
+	  *  This flag makes the parser automatically correct the query so
+	  *  that it can be parsed.
+	  */
+	 FLAG_ERROR_RECOVERY = 2048,
+
+	FLAG_DEFAULT = FLAG_PHRASE|FLAG_BOOLEAN|FLAG_LOVEHATE|FLAG_ERROR_RECOVERY
     } feature_flag;
 
     /// Stemming strategies, for use with set_stemming_strategy().
@@ -651,6 +741,12 @@ class XAPIAN_VISIBILITY_DEFAULT QueryParser {
      *  If there were no corrections, an empty string is returned.
      */
     std::string get_corrected_query_string() const XAPIAN_PURE_FUNCTION;
+
+    /// Returns the struct representing the types of parse errors (if any).
+    parse_error_s get_error_detail() const;
+
+    /// Returns a string describing the details of parse errors (if any).
+    std::string get_error_description_string() const;
 
     /// Return a string describing this object.
     std::string get_description() const XAPIAN_PURE_FUNCTION;

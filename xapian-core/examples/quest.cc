@@ -152,6 +152,11 @@ try {
     if (!correction.empty())
 	cout << "Did you mean: " << correction << "\n\n";
 
+    const string & error_description = parser.get_error_description_string();
+    if (!error_description.empty())
+    cout << "Following error(s) may be present in your query:\n";
+    cout << error_description;
+
     cout << "Parsed Query: " << query.get_description() << endl;
 
     if (!have_database) {

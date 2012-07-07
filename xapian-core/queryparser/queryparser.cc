@@ -148,7 +148,11 @@ QueryParser::parse_query(const string &query_string, unsigned flags,
 
     Query result = internal->parse_query(query_string, flags, default_prefix);
     if (internal->errmsg && strcmp(internal->errmsg, "parse error") == 0) {
+	string corrected_query_backup = internal->corrected_query;
+	parse_error_s parse_error_backup = internal->parse_error;
 	result = internal->parse_query(query_string, 0, default_prefix);
+	internal->corrected_query = corrected_query_backup;
+	internal->parse_error = parse_error_backup;
     }
 
     if (internal->errmsg) throw Xapian::QueryParserError(internal->errmsg);
@@ -208,6 +212,18 @@ string
 QueryParser::get_corrected_query_string() const
 {
     return internal->corrected_query;
+}
+
+parse_error_s
+QueryParser::get_error_detail() const
+{
+    return internal->parse_error;
+}
+
+string
+QueryParser::get_error_description_string() const
+{
+    return internal->get_internal_error_description_string();
 }
 
 string
