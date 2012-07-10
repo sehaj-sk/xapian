@@ -32,6 +32,7 @@
 #include <string>
 
 #include "cjk-tokenizer.h"
+#include <xapian/linkgrammar.h>
 
 using namespace std;
 
@@ -53,6 +54,16 @@ U_isupper(unsigned ch) {
 inline unsigned check_wordchar(unsigned ch) {
     if (Unicode::is_wordchar(ch)) return Unicode::tolower(ch);
     return 0;
+}
+
+inline bool
+is_wordchar_whitespace(unsigned ch) {
+    return Unicode::is_whitespace(ch) || Unicode::is_wordchar(ch);
+}
+
+inline bool
+is_nonwordchar_whitespace(unsigned ch) {
+    return Unicode::is_whitespace(ch) || !Unicode::is_wordchar(ch);
 }
 
 inline bool
@@ -312,4 +323,142 @@ endofterm:
     }
 }
 
+
+#ifdef HAVE_LIBLINK_GRAMMAR
+void
+TermGenerator::Internal::index_text_with_POS(const string & text,
+                    termcount wdf_inc,
+				    const string & prefix, bool with_positions)
+{
+    int stop_mode = STOPWORDS_INDEX_UNSTEMMED_ONLY;
+    if (!stopper) stop_mode = STOPWORDS_NONE;
+
+    LinkGrammar pos_tagger;
+    list<LinkGrammar::pos_info_s> pos_info;
+
+    // TODO: Break the text into constituent sentences. I have done a
+    // look-around and have come across some alternatives. But need guidance
+    // as to which one to choose ?
+    // So at present it shall work only for a single sentence.
+    pos_info = pos_tagger.get_pos_sentence(text);
+
+    // If the sentence fails to get tokenized or parsed, then the list
+    // returned by get_pos_sentence() shall be empty.
+    // Under such cases, simply use the index_text() for indexing that
+    // sentence.
+    if (pos_info.empty()) {
+        index_text(Utf8Iterator(text), wdf_inc, prefix, with_positions);
+        return;
+    }
+
+    string word, pos, temp_word;
+    Utf8Iterator checker;
+    Utf8Iterator end;
+    bool is_nonwordchar_inbetween;
+
+    for (list<LinkGrammar::pos_info_s>::iterator it = pos_info.begin();
+        it != pos_info.end(); it++) {
+        temp_word.resize(0);
+        is_nonwordchar_inbetween = false;
+        word = it->word;
+        pos = pos_tagger.pos_to_string(it->pos);
+
+        if (pos.compare("NOUNPHRASE") != 0 &&
+                word.size() > MAX_PROB_TERM_LENGTH)
+            continue;
+
+        if (stop_mode == STOPWORDS_IGNORE && (*stopper)(word))
+            continue;
+
+        checker = Utf8Iterator(word);
+        while (checker != end) {
+            while (checker != end && !is_nonwordchar_whitespace(*checker)) {
+                Unicode::append_utf8(temp_word, Unicode::tolower(*checker++));
+            }
+            if (checker == end)  break;
+            if (Unicode::is_whitespace(*checker)) {
+                // In case of Noun Phrase, there can be group of words.
+                // Under such cases, replace the whitespace between
+                // those words with '#'. This makes them appear as
+                // a single entity in the term list of the document.
+                if (++checker != end && !temp_word.empty())
+                    Unicode::append_utf8(temp_word,'#');
+            } else {
+                // At this instant, iterator currently points to a non-wordchar.
+                Utf8Iterator p = find_if(checker, end, is_wordchar_whitespace);
+                if (p == end)   break;
+                if (Unicode::is_whitespace(*p)) {
+                    if (++p != end && !temp_word.empty())
+                        Unicode::append_utf8(temp_word,'#');
+                } else {
+                    // It means that there are non-word characters between
+                    // two words without a whitespace. (such as "good..boy")
+                    // Under this case, if it's not a Noun Phrase, then just
+                    // call index_text() for this particular word.
+                    // If it's a Noun Phrase, then replace the non-wordchar(s)
+                    // with '#'. This will be in agreement with replacement of
+                    // whitespace with '#' for Noun Phrase.
+                    // FIXME: Is this approach right or not ?
+                    if (pos.compare("NOUNPHRASE") != 0) {
+                        is_nonwordchar_inbetween = true;
+                        break;
+                    } else {
+                        Unicode::append_utf8(temp_word,'#');
+                    }
+                }
+                checker = p;
+            }
+        }
+
+        if (is_nonwordchar_inbetween) {
+            index_text(Utf8Iterator(word), wdf_inc, prefix, with_positions );
+            continue;
+        }
+
+        // Ensure that there are no trailing '-' caused due to replacing
+        // whitespace with '-' for the case of Noun Phrase.
+        while (temp_word[temp_word.length() - 1] == '#')
+            temp_word.erase(temp_word.length() - 1);
+
+        if (temp_word.empty())  continue;
+
+        word = temp_word;
+        if (strategy == TermGenerator::STEM_SOME ||
+	        strategy == TermGenerator::STEM_NONE) {
+	        if (with_positions) {
+	            doc.add_posting(prefix + pos + word, ++termpos, wdf_inc);
+	        } else {
+	            doc.add_term(prefix + pos + word, wdf_inc);
+	        }
+	    }
+        if (pos.compare("NOUNPHRASE") == 0 )    continue;
+
+        if ((flags & FLAG_SPELLING) && prefix.empty())
+            db.add_spelling(word);
+
+        if (strategy == TermGenerator::STEM_NONE ||
+            !stemmer.internal.get())    continue;
+
+        if (strategy == TermGenerator::STEM_SOME) {
+            if (stop_mode == STOPWORDS_INDEX_UNSTEMMED_ONLY &&
+                (*stopper)(word))   continue;
+            if (!should_stem(word)) continue;
+        }
+
+        // Add stemmed form without positional information.
+        string stem;
+        if (strategy != TermGenerator::STEM_ALL) {
+            stem += "Z";
+        }
+        stem += prefix;
+        stem += pos;
+        stem += stemmer(word);
+        if (strategy != TermGenerator::STEM_SOME && with_positions) {
+            doc.add_posting(stem, ++termpos, wdf_inc);
+        } else {
+            doc.add_term(stem, wdf_inc);
+        }
+    }
+}
+#endif /* HAVE_LIBLINK_GRAMMAR */
 }

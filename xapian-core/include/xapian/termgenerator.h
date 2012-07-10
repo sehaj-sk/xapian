@@ -26,6 +26,7 @@
 #include <xapian/unicode.h>
 #include <xapian/visibility.h>
 
+#include <config.h>
 #include <string>
 
 namespace Xapian {
@@ -171,6 +172,40 @@ class XAPIAN_VISIBILITY_DEFAULT TermGenerator {
 				      const std::string & prefix = std::string()) {
 	return index_text_without_positions(Utf8Iterator(text), wdf_inc, prefix);
     }
+
+    #ifdef HAVE_LIBLINK_GRAMMAR
+
+    /** Index some text along with the POS info.
+     *
+     *  The POS of the words are prefixed while indexing.
+     *  For example, suppose we have a word "playing" which is a verb, and we
+     *  want to add it to the document, then the term added would be
+     *  "VERBplaying" (keeping in mind the difference due to stemming strategy)
+     *
+     *  @param text     The text to index.
+     *  @param wdf_inc  The wdf increment (default 1).
+     *  @param prefix   The term prefix to use (default is no prefix).
+     */
+    void index_text_with_POS(const std::string & text,
+                      Xapian::termcount wdf_inc = 1,
+                      const std::string & prefix = std::string());
+
+    /** Index some text along with the POS info but without the positional
+     *  information.
+     *
+     * Just like index_text_with_POS, but no positional information is
+     * generated. This means that the database will be significantly smaller,
+     * but that phrase searching and NEAR won't be supported.
+     *
+     *  @param text     The text to index.
+     *  @param wdf_inc  The wdf increment (default 1).
+     *  @param prefix   The term prefix to use (default is no prefix).
+     */
+    void index_text_with_POS_without_positions(const std::string & text,
+                      Xapian::termcount wdf_inc = 1,
+                      const std::string & prefix = std::string());
+
+    #endif /* HAVE_LIBLINK_GRAMMAR */
 
     /** Increase the term position used by index_text.
      *

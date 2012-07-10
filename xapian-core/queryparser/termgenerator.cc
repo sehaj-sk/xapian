@@ -104,6 +104,22 @@ TermGenerator::index_text_without_positions(const Xapian::Utf8Iterator & itor,
     internal->index_text(itor, weight, prefix, false);
 }
 
+#ifdef HAVE_LIBLINK_GRAMMAR
+void
+TermGenerator::index_text_with_POS(const string & text, Xapian::termcount weight,
+                        const string & prefix)
+{
+    internal->index_text_with_POS(text, weight, prefix, true);
+}
+
+void
+TermGenerator::index_text_with_POS_without_positions(const string & text, Xapian::termcount weight,
+                        const string & prefix)
+{
+    internal->index_text_with_POS(text, weight, prefix, false);
+}
+#endif /* HAVE_LIBLINK_GRAMMAR */
+
 void
 TermGenerator::increase_termpos(Xapian::termcount delta)
 {
