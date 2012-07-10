@@ -527,6 +527,8 @@ dnl AC_TRY_LINK_FUNC(dlsym, ,
 dnl	[AC_CHECK_LIB(dl, dlsym, [DL_LIBS="-ldl"])])
 dnl AC_SUBST(DL_LIBS)
 
+AC_CHECK_LIB(link-grammar, linkage_create)
+
 dnl Checks for header files.
 AC_CHECK_HEADERS([fcntl.h limits.h sys/errno.h sys/select.h], [], [], [ ])
 
