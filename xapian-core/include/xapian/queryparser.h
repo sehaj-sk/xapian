@@ -316,8 +316,7 @@ class XAPIAN_VISIBILITY_DEFAULT NumberValueRangeProcessor : public StringValueRa
 
 /// Represents the types of parse error if the query fails to get parsed.
 struct  XAPIAN_VISIBILITY_DEFAULT parse_error_s {
-    /**
-     *  Represents missing opening bracket '('.
+    /** Represents missing opening bracket '('.
      *
      *  Contains a list of position(s) of closing bracket, ')' in the query,
      *  for which no corresponding opening bracket was present. An empty
@@ -327,8 +326,7 @@ struct  XAPIAN_VISIBILITY_DEFAULT parse_error_s {
      */
     std::list<int> BRA_MISSING;
 
-    /**
-     *  Represents missing closing bracket ')'.
+    /** Represents missing closing bracket ')'.
      *
      *  Contains a list of position(s) of opening bracket, '(' in the query,
      *  for which no corresponding closing bracket was present. An empty
@@ -338,8 +336,7 @@ struct  XAPIAN_VISIBILITY_DEFAULT parse_error_s {
      */
     std::list<int> KET_MISSING;
 
-    /**
-     *  Represents ineffective LOVE, '+' since followed by only non-word
+    /** Represents ineffective LOVE, '+' since followed by only non-word
      *  characters.
      *
      *  Contains a list of position(s) of such '+' in the query. An empty list
@@ -349,8 +346,7 @@ struct  XAPIAN_VISIBILITY_DEFAULT parse_error_s {
      */
     std::list<int> PSEUDO_LOVE;
 
-    /**
-     *  Represents ineffective HATE, '-' since followed by only non-word
+    /** Represents ineffective HATE, '-' since followed by only non-word
      *  characters.
      *
      *  Contains a list of position(s) of such '-' in the query. An empty list
@@ -360,8 +356,7 @@ struct  XAPIAN_VISIBILITY_DEFAULT parse_error_s {
      */
     std::list<int> PSEUDO_HATE;
 
-    /**
-     *  Represents ineffective brackets, containing only non-word characters
+    /** Represents ineffective brackets, containing only non-word characters
      *  between them.
      *
      *  Contains a list of starting position(s) of such brackets in the query.
@@ -371,8 +366,7 @@ struct  XAPIAN_VISIBILITY_DEFAULT parse_error_s {
      */
     std::list<int> PSEUDO_BRACKET;
 
-    /**
-     *  Represents ineffective quotes, containing only non-word characters
+    /** Represents ineffective quotes, containing only non-word characters
      *  between them.
      *
      *  Contains a list of starting position(s) of such quotes in the query.
@@ -382,8 +376,7 @@ struct  XAPIAN_VISIBILITY_DEFAULT parse_error_s {
      */
     std::list<int> PSEUDO_QUOTE;
 
-    /**
-     *  Represents a query containing only HATE term(s).
+    /** Represents a query containing only HATE term(s).
      *
      *  Example Query:  (-xapian)
      */
@@ -565,7 +558,7 @@ class XAPIAN_VISIBILITY_DEFAULT QueryParser {
 	  *  This flags determines whether the parser automatically corrects the
 	  *  query or not. If there are errors in the query, then suggestions are
 	  *  made in corrected_string (callable via get_corrected_query_string()
-	  *  method) ) irrespective of whether this flag is enabled or not.
+	  *  method) irrespective of whether this flag is enabled or not.
 	  *
 	  *  This flag makes the parser automatically correct the query so
 	  *  that it can be parsed.
@@ -817,7 +810,7 @@ class XAPIAN_VISIBILITY_DEFAULT QueryParser {
      */
     std::string get_corrected_query_string() const XAPIAN_PURE_FUNCTION;
 
-    /// Returns the struct representing the types of parse errors (if any).
+    /// Returns the struct representing the types of parse errors.
     parse_error_s get_error_detail() const;
 
     /// Return a string describing this object.
