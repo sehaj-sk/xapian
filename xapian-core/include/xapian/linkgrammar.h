@@ -32,7 +32,7 @@
 #include <xapian/visibility.h>
 #include <list>
 #include <string>
-#include <string.h>
+#include <cstring>
 
 namespace Xapian {
 
