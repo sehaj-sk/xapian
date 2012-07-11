@@ -34,8 +34,6 @@
 #include <string>
 #include <string.h>
 
-using namespace std;
-
 namespace Xapian {
 
 class XAPIAN_VISIBILITY_DEFAULT LinkGrammar {
@@ -48,13 +46,13 @@ class XAPIAN_VISIBILITY_DEFAULT LinkGrammar {
     struct pos_info_s {
         /// The word whose POS we are trying to find.
         /// In case of NOUNPHRASE, there can be group of words.
-        string word;
+        std::string word;
 
         /// The POS of the word.
         pos_type pos;
 
         /// Constructor.
-        pos_info_s(const string & word_, pos_type pos_)
+        pos_info_s(const std::string & word_, pos_type pos_)
         : word(word_), pos(pos_) { }
     };
 
@@ -69,7 +67,7 @@ class XAPIAN_VISIBILITY_DEFAULT LinkGrammar {
      *          parsing is allowed to take.
      *          [default: 5 seconds]
      */
-    LinkGrammar(const string & language = "en", const int seconds = 5);
+    LinkGrammar(const std::string & language = "en", const int seconds = 5);
 
     /// Destructor.
     ~LinkGrammar();
@@ -81,8 +79,8 @@ class XAPIAN_VISIBILITY_DEFAULT LinkGrammar {
      *          sentence?
      *          [default: true]
      */
-    list<pos_info_s> get_pos_sentence(const string & sentence,
-                            const bool is_NP_required = true);
+    std::list<pos_info_s> get_pos_sentence(const std::string & sentence,
+                                const bool is_NP_required = true);
 
     /** Gives the linkage diagram, prodced by Link Grammar for the given
      *  sentence.
@@ -90,7 +88,7 @@ class XAPIAN_VISIBILITY_DEFAULT LinkGrammar {
      *  @param sentence     The sentence for which the linkage diagram is
                 required.
      */
-    string get_linkage_diagram_string(const string & sentence) const;
+    std::string get_linkage_diagram_string(const std:: string & sentence) const;
 
     /** Given the enum pos_type, it returns the corresponding string.
      *
@@ -105,8 +103,8 @@ class XAPIAN_VISIBILITY_DEFAULT LinkGrammar {
      *          returned.
      *          [default: true, meaning return null string for NONE]
      */
-    string pos_to_string(const unsigned pos_type_value,
-            bool null_string_for_none_pos = true) const;
+    std::string pos_to_string(const unsigned pos_type_value,
+                    bool null_string_for_none_pos = true) const;
 
     /** Gives a string containing the information of the words of the given
      *  sentence and their associated POS.
@@ -114,7 +112,7 @@ class XAPIAN_VISIBILITY_DEFAULT LinkGrammar {
      *  @param sentence     The sentence for which the POS information
      *          containing string is required.
      */
-    string get_pos_description_string(const string & sentence);
+    std::string get_pos_description_string(const std::string & sentence);
 
     /** Gives the string contating constituent tree for the given sentence. The
      *  tree depicts the breaking of the sentence into Noun Phrase, Verb
@@ -123,7 +121,7 @@ class XAPIAN_VISIBILITY_DEFAULT LinkGrammar {
      *  @param sentence     The sentence for which the string containing
      *          constituent tree is requred.
      */
-    string get_constituent_tree_string(const string & sentence) const;
+    std::string get_constituent_tree_string(const std::string & sentence) const;
 
   private:
     /// A Dictionary is the programmer's handle on the set of word definitions
@@ -148,7 +146,7 @@ class XAPIAN_VISIBILITY_DEFAULT LinkGrammar {
      *           and can be thought of as a Sentence together with a collection
      *           of links.
      */
-    Linkage set_default_linkage(const string & sentence) const;
+    Linkage set_default_linkage(const std::string & sentence) const;
 
     /** Finds the subscript of the required word.
      *
@@ -165,7 +163,8 @@ class XAPIAN_VISIBILITY_DEFAULT LinkGrammar {
      *          sentence. Hence the subscript is not present in it.
      *          (Example: "playing")
      */
-    string get_subscript(const char * linkage_word, const char * sentence_word);
+    std::string get_subscript(const char * linkage_word,
+                    const char * sentence_word);
 
     /** Finds POS from the given subcript.
      *
@@ -173,7 +172,7 @@ class XAPIAN_VISIBILITY_DEFAULT LinkGrammar {
      *
      * @param subscript     The subscript from which the POS is to be found.
      */
-    pos_type get_pos_from_subscript(const string subscript);
+    pos_type get_pos_from_subscript(const std::string subscript);
 
     /** Finds the Noun Phrases present in the sentence.
      *
@@ -182,7 +181,7 @@ class XAPIAN_VISIBILITY_DEFAULT LinkGrammar {
      * @param linkage   The linkage from which the Noun Phrases have to be
      *          extracted.
      */
-    list<string> get_NP(Linkage linkage);
+    std::list<std::string> get_NP(Linkage linkage);
 
     /** A recursive tree traversal for finding the strings corresponding to
      *  Noun Phrase.
@@ -193,7 +192,8 @@ class XAPIAN_VISIBILITY_DEFAULT LinkGrammar {
      *          associated with the Noun Phrase.
      *  @param current_root     The pointer to the current root of the subtree.
      */
-    list<string> traverse_for_NP(list<string> list_NP, CNode * current_root);
+    std::list<std::string> traverse_for_NP(std::list<std::string> list_NP,
+                                CNode * current_root);
 
     /** Checks if the Noun Phrase is present at the leaf of the Tree.
      *
