@@ -152,7 +152,11 @@ try {
     if (!correction.empty())
 	cout << "Did you mean: " << correction << "\n\n";
 
-    const string & error_description = parser.get_error_description_string();
+    // Get the struct describing the parse error and use the automatic
+    // error message.
+    Xapian::parse_error_s parse_error;
+    parse_error = parser.get_error_detail();
+    const string & error_description = parse_error.get_error_description_string();
     if (!error_description.empty()) {
         cout << "Following error(s) may be present in your query:\n";
         cout << error_description;

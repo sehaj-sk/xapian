@@ -41,7 +41,6 @@
 #include <limits>
 #include <list>
 #include <string>
-#include <sstream>
 
 using namespace std;
 
@@ -777,79 +776,6 @@ class ParserHandler {
     operator yyParser*() { return parser; }
     ~ParserHandler() { ParseFree(parser); }
 };
-
-string
-QueryParser::Internal::get_internal_error_description_string()
-{
-    ostringstream error_description;
-    string spacer(" ");
-
-    if (!parse_error.BRA_MISSING.empty()) {
-        error_description << "Closing bracket ')' at following position(s) have no corresponding opening bracket '(':\n";
-        for (list<int>::iterator it = parse_error.BRA_MISSING.begin();
-                it != parse_error.BRA_MISSING.end(); it++) {
-            error_description << *it;
-            error_description << spacer;
-        }
-        error_description << "\n\n";
-    }
-
-    if (!parse_error.KET_MISSING.empty()) {
-        error_description << "Opening bracket '(' at following position(s) have no corresponding closing bracket '(':\n";
-        for (list<int>::iterator it = parse_error.KET_MISSING.begin();
-                it != parse_error.KET_MISSING.end(); it++) {
-            error_description << *it;
-            error_description << spacer;
-        }
-        error_description << "\n\n";
-    }
-
-    if (!parse_error.PSEUDO_LOVE.empty()) {
-        error_description << "Ineffective LOVE, '+' since followed by only non-word characters at following position(s):\n";
-        for (list<int>::iterator it = parse_error.PSEUDO_LOVE.begin();
-                it != parse_error.PSEUDO_LOVE.end(); it++) {
-            error_description << *it;
-            error_description << spacer;
-        }
-        error_description << "\n\n";
-    }
-
-    if (!parse_error.PSEUDO_HATE.empty()) {
-        error_description << "Ineffective HATE, '-' since followed by only non-word characters at following position(s):\n";
-        for (list<int>::iterator it = parse_error.PSEUDO_HATE.begin();
-                it != parse_error.PSEUDO_HATE.end(); it++) {
-            error_description << *it;
-            error_description << spacer;
-        }
-        error_description << "\n\n";
-    }
-
-    if (!parse_error.PSEUDO_BRACKET.empty()) {
-        error_description << "Ineffective brackets, containing only non-word characters between them at following position(s):\n";
-        for (list<int>::iterator it = parse_error.PSEUDO_BRACKET.begin();
-                it != parse_error.PSEUDO_BRACKET.end(); it++) {
-            error_description << *it;
-            error_description << spacer;
-        }
-        error_description << "\n\n";
-    }
-
-    if (!parse_error.PSEUDO_QUOTE.empty()) {
-        error_description << "Ineffective quotes, containing only non-word characters between them at following position(s):\n";
-        for (list<int>::iterator it = parse_error.PSEUDO_QUOTE.begin();
-                it != parse_error.PSEUDO_QUOTE.end(); it++) {
-            error_description << *it;
-            error_description << spacer;
-        }
-        error_description << "\n\n";
-    }
-
-    if (parse_error.ONLY_HATE) {
-        error_description << "The query contains only HATE term(s).\n\n";
-    }
-    
-    return error_description.str();
-}
 
 Query
 QueryParser::Internal::parse_query(const string &qs, unsigned flags,

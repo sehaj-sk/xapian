@@ -221,12 +221,6 @@ QueryParser::get_error_detail() const
 }
 
 string
-QueryParser::get_error_description_string() const
-{
-    return internal->get_internal_error_description_string();
-}
-
-string
 QueryParser::get_description() const
 {
     // FIXME : describe better!

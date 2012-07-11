@@ -32,6 +32,7 @@
 #include <set>
 #include <string>
 #include <list>
+#include <sstream>
 
 namespace Xapian {
 
@@ -387,6 +388,80 @@ struct  XAPIAN_VISIBILITY_DEFAULT parse_error_s {
      *  Example Query:  (-xapian)
      */
     bool ONLY_HATE;
+
+    /** Returns a string describing the details of parse errors. Empty string
+     *  is returned if no parse error was found.
+     */
+    std::string get_error_description_string() {
+        std::ostringstream error_description;
+        std::string spacer(" ");
+
+        if (!BRA_MISSING.empty()) {
+            error_description << "Closing bracket ')' at following position(s) have no corresponding opening bracket '(':\n";
+            for (std::list<int>::iterator it = BRA_MISSING.begin();
+                    it != BRA_MISSING.end(); it++) {
+                error_description << *it;
+                error_description << spacer;
+            }
+            error_description << "\n\n";
+        }
+
+        if (!KET_MISSING.empty()) {
+            error_description << "Opening bracket '(' at following position(s) have no corresponding closing bracket ')':\n";
+            for (std::list<int>::iterator it = KET_MISSING.begin();
+                    it != KET_MISSING.end(); it++) {
+                error_description << *it;
+                error_description << spacer;
+            }
+            error_description << "\n\n";
+        }
+
+        if (!PSEUDO_LOVE.empty()) {
+            error_description << "Ineffective LOVE, '+' since followed by only non-word characters at following position(s):\n";
+            for (std::list<int>::iterator it = PSEUDO_LOVE.begin();
+                    it != PSEUDO_LOVE.end(); it++) {
+                error_description << *it;
+                error_description << spacer;
+            }
+            error_description << "\n\n";
+        }
+
+        if (!PSEUDO_HATE.empty()) {
+            error_description << "Ineffective HATE, '-' since followed by only non-word characters at following position(s):\n";
+            for (std::list<int>::iterator it = PSEUDO_HATE.begin();
+                    it != PSEUDO_HATE.end(); it++) {
+                error_description << *it;
+                error_description << spacer;
+            }
+            error_description << "\n\n";
+        }
+
+        if (!PSEUDO_BRACKET.empty()) {
+            error_description << "Ineffective brackets, containing only non-word characters between them at following position(s):\n";
+            for (std::list<int>::iterator it = PSEUDO_BRACKET.begin();
+                    it != PSEUDO_BRACKET.end(); it++) {
+                error_description << *it;
+                error_description << spacer;
+            }
+            error_description << "\n\n";
+        }
+
+        if (!PSEUDO_QUOTE.empty()) {
+            error_description << "Ineffective quotes, containing only non-word characters between them at following position(s):\n";
+            for (std::list<int>::iterator it = PSEUDO_QUOTE.begin();
+                    it != PSEUDO_QUOTE.end(); it++) {
+                error_description << *it;
+                error_description << spacer;
+            }
+            error_description << "\n\n";
+        }
+
+        if (ONLY_HATE) {
+            error_description << "The query contains only HATE term(s).\n\n";
+        }
+
+        return error_description.str();
+    }
 };
 
 /// Build a Xapian::Query object from a user query string.
@@ -744,9 +819,6 @@ class XAPIAN_VISIBILITY_DEFAULT QueryParser {
 
     /// Returns the struct representing the types of parse errors (if any).
     parse_error_s get_error_detail() const;
-
-    /// Returns a string describing the details of parse errors (if any).
-    std::string get_error_description_string() const;
 
     /// Return a string describing this object.
     std::string get_description() const XAPIAN_PURE_FUNCTION;
