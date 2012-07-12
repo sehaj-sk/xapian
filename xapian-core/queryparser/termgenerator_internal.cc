@@ -331,7 +331,8 @@ TermGenerator::Internal::index_text_with_POS(const string & text,
 				    const string & prefix, bool with_positions)
 {
     int stop_mode = STOPWORDS_INDEX_UNSTEMMED_ONLY;
-    if (!stopper) stop_mode = STOPWORDS_NONE;
+    if (!stopper)
+        stop_mode = STOPWORDS_NONE;
 
     LinkGrammar pos_tagger;
     list<LinkGrammar::pos_info_s> pos_info;
@@ -375,7 +376,8 @@ TermGenerator::Internal::index_text_with_POS(const string & text,
             while (checker != end && !is_nonwordchar_whitespace(*checker)) {
                 Unicode::append_utf8(temp_word, Unicode::tolower(*checker++));
             }
-            if (checker == end)  break;
+            if (checker == end)
+                break;
             if (Unicode::is_whitespace(*checker)) {
                 // In case of Noun Phrase, there can be group of words.
                 // Under such cases, replace the whitespace between
@@ -386,7 +388,8 @@ TermGenerator::Internal::index_text_with_POS(const string & text,
             } else {
                 // At this instant, iterator currently points to a non-wordchar.
                 Utf8Iterator p = find_if(checker, end, is_wordchar_whitespace);
-                if (p == end)   break;
+                if (p == end)
+                    break;
                 if (Unicode::is_whitespace(*p)) {
                     if (++p != end && !temp_word.empty())
                         Unicode::append_utf8(temp_word,'#');
@@ -420,7 +423,8 @@ TermGenerator::Internal::index_text_with_POS(const string & text,
         while (temp_word[temp_word.length() - 1] == '#')
             temp_word.erase(temp_word.length() - 1);
 
-        if (temp_word.empty())  continue;
+        if (temp_word.empty())
+            continue;
 
         word = temp_word;
         if (strategy == TermGenerator::STEM_SOME ||
@@ -431,18 +435,22 @@ TermGenerator::Internal::index_text_with_POS(const string & text,
 	            doc.add_term(prefix + pos + word, wdf_inc);
 	        }
 	    }
-        if (pos.compare("NOUNPHRASE") == 0 )    continue;
+        if (pos.compare("NOUNPHRASE") == 0 )
+            continue;
 
         if ((flags & FLAG_SPELLING) && prefix.empty())
             db.add_spelling(word);
 
         if (strategy == TermGenerator::STEM_NONE ||
-            !stemmer.internal.get())    continue;
+                !stemmer.internal.get())
+            continue;
 
         if (strategy == TermGenerator::STEM_SOME) {
             if (stop_mode == STOPWORDS_INDEX_UNSTEMMED_ONLY &&
-                (*stopper)(word))   continue;
-            if (!should_stem(word)) continue;
+                    (*stopper)(word))
+                continue;
+            if (!should_stem(word))
+                continue;
         }
 
         // Add stemmed form without positional information.
