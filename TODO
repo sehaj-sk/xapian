@@ -142,3 +142,39 @@ Refractored the error recovery code and did the following changes:
        the parse error types.
     4. Modified examples/quest.cc to represent the use of
        get_error_description_string() method.
+
+Modified queryparsertest.cc as per the recent changes.
+
+Understood how configure script of Xapian works and added checking of presence
+of Link Grammar library in configure script.
+
+Made use of macro produced by configure script via config.h to ensure that
+the compiling of the source code does not fail in case, the Link Grammar
+library is not present on the machine.
+
+Made Link Grammar interface header file.
+
+Made Link Grammar interface implementation file.
+
+Finding and removing Bugs in the Link Grammar interface.
+
+Made implementation of Link Grammar for POS tagged based indexing in
+termgenerator. At present, it works for a single sentence only. Have to extend
+it using a sentence breaking algorithm. Have made some search and got some
+options but don't know what's the best one to use. NEED SUGGESTIONS ASAP.
+
+Added a simple example, examples/pos_index.cc to show the features of the
+POS based indexing. Given a sentence, it does the following things:
+    1. Index it as a Xapian document using POS support from Link Grammar.
+    2. Show the linkage diagram produced, for the give sentence.
+    3. Show the pos extracted for the words of the sentence.
+    4. Show structure of the constituent tree (Showing Noun Phrase, Verb
+       Phrase etc.) produced for the given sentence.
+It also contains two sample testcases and the corresponding output produced,
+as well as the output of delve for the corresponding document, at the end
+of the file.
+
+Making changes as per the reviews on the commits by Dan.
+
+Attending to the Fixme's present in the current implementation, removing
+any bugs and doing modifications.
