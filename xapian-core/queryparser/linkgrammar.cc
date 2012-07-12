@@ -113,13 +113,15 @@ LinkGrammar::get_pos_sentence(const string & sentence, const bool is_NP_required
         sentence_word = sentence_get_word(sent, i);
 
         if (strcmp(sentence_word, "LEFT-WALL") == 0 ||
-            strcmp(sentence_word, "RIGHT-WALL") == 0)   continue;
+                strcmp(sentence_word, "RIGHT-WALL") == 0)
+            continue;
 
         linkage_word = linkage_get_word(linkage, i);
         subscript = get_subscript(linkage_word, sentence_word);
 
         if ((subscript[0] == '!' || subscript[0] == '?') &&
-            subscript.length() > 3)     subscript.erase(0, 3);
+                subscript.length() > 3)
+            subscript.erase(0, 3);
 
         POS = get_pos_from_subscript(subscript);
         pos_info.push_back(pos_info_s(sentence_word, POS));
@@ -195,7 +197,8 @@ LinkGrammar::get_pos_description_string(const string & sentence)
     ostringstream pos_description;
     list<LinkGrammar::pos_info_s> pos_info;
     pos_info = get_pos_sentence(sentence);
-    if (pos_info.empty())   return pos_description.str();
+    if (pos_info.empty())
+        return pos_description.str();
 
     list<LinkGrammar::pos_info_s>::iterator it;
     for (it = pos_info.begin(); it != pos_info.end(); it++) {
@@ -321,7 +324,8 @@ LinkGrammar::get_NP(Linkage linkage)
     list<string> list_NP;
     CNode * root;
     root = linkage_constituent_tree(linkage);
-    if (root == NULL)    return list_NP;
+    if (root == NULL)
+        return list_NP;
     list_NP = traverse_for_NP(list_NP, root);
     linkage_free_constituent_tree(root);
     return list_NP;
