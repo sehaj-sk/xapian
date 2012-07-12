@@ -33,6 +33,50 @@ using namespace Xapian;
 
 using namespace std;
 
+// Meanings of subscript according to what is mentioned in the
+// documentation at
+// http://www.abisource.com/projects/link-grammar/dict/introduction.html
+// For complete list, please refer to that documentation.
+
+/********************************************************************
+ **  Subscript     ****         Meaning                            **
+ ********************************************************************
+ *    n            ****   Noun                                      *
+ *    n-u          ****   Noun, uncountable (mass noun)             *
+ *    p            ****   Plural count nouns                        *
+ *    s            ****   Singular, mass or count nouns             *
+ *    o            ****   Organizations (corporations)              *
+ ********************************************************************/
+static const string Noun = "n n-u p s o";
+
+/********************************************************************
+ **  Subscript     ****         Meaning                            **
+ ********************************************************************
+ *    v            ****   Verb                                      *
+ *    v-d          ****   Verb, past tense                          *
+ *    w            ****   Verb                                      *
+ *    w-d          ****   Verb, past tense                          *
+ *    q            ****   Verb, Question-related or paraphrasing    *
+ *    q-d          ****   Verb, past tense                          *
+ ********************************************************************/
+static const string Verb = "v v-d w w-d q q-d";
+
+/********************************************************************
+ **  Subscript     ****         Meaning                            **
+ ********************************************************************
+ *    a            ****   Adjective                                 *
+ *    a-c          ****   Adjective, comparative/relative           *
+ *    a-s          ****   Adjective, superlative                    *
+ ********************************************************************/
+static const string Adjective = "a a-c a-s";
+
+/********************************************************************
+ **  Subscript     ****         Meaning                            **
+ ********************************************************************
+ *    e            ****   Adverbs                                   *
+ ********************************************************************/
+static const string Adverb = "e";
+
 LinkGrammar::LinkGrammar(const string & language, const int seconds)
 {
     // Since Link Grammar is written in C, hence it accepts char * rather
@@ -261,57 +305,18 @@ LinkGrammar::get_subscript(const char * linkage_word,
 LinkGrammar::pos_type
 LinkGrammar::get_pos_from_subscript(const string subscript)
 {
-    // Meanings of subscript according to what is mentioned in the
-    // documentation at
-    // http://www.abisource.com/projects/link-grammar/dict/introduction.html
-    // For complete list, please refer to that documentation.
+    size_t found;
 
-    /********************************************************************
-     **  Subscript     ****         Meaning                            **
-     ********************************************************************
-     *    n            ****   Noun                                      *
-     *    n-u          ****   Noun, uncountable (mass noun)             *
-     *    p            ****   Plural count nouns                        *
-     *    s            ****   Singular, mass or count nouns             *
-     *    o            ****   Organizations (corporations)              *
-     ********************************************************************/
-    if (subscript.compare("n") == 0 || subscript.compare("n-u") == 0 ||
-        subscript.compare("p") == 0 || subscript.compare("s") == 0 ||
-        subscript.compare("o") == 0)
+    if ((found = Noun.find(subscript)) != string::npos)
         return NOUN;
 
-    /********************************************************************
-     **  Subscript     ****         Meaning                            **
-     ********************************************************************
-     *    v            ****   Verb                                      *
-     *    v-d          ****   Verb, past tense                          *
-     *    w            ****   Verb                                      *
-     *    w-d          ****   Verb, past tense                          *
-     *    q            ****   Verb, Question-related or paraphrasing    *
-     *    q-d          ****   Verb, past tense                          *
-     ********************************************************************/
-    if (subscript.compare("v") == 0 || subscript.compare("v-d") == 0 ||
-        subscript.compare("w") == 0 || subscript.compare("w-d") == 0 ||
-        subscript.compare("q") == 0 || subscript.compare("q-d") == 0)
+    if ((found = Verb.find(subscript)) != string::npos)
         return VERB;
 
-    /********************************************************************
-     **  Subscript     ****         Meaning                            **
-     ********************************************************************
-     *    a            ****   Adjective                                 *
-     *    a-c          ****   Adjective, comparative/relative           *
-     *    a-s          ****   Adjective, superlative                    *
-     ********************************************************************/
-    if (subscript.compare("a") == 0 || subscript.compare("a-c") == 0 ||
-        subscript.compare("a-s") == 0)
+    if ((found = Adjective.find(subscript)) != string::npos)
         return ADJECTIVE;
 
-    /********************************************************************
-     **  Subscript     ****         Meaning                            **
-     ********************************************************************
-     *    e            ****   Adverbs                                   *
-     ********************************************************************/
-    if (subscript.compare("e") == 0)
+    if ((found = Adverb.find(subscript)) != string::npos)
         return ADVERB;
 
     return NONE;
