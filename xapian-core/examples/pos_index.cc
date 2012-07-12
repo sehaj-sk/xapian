@@ -91,6 +91,9 @@ exit(1);
     db.commit();
 
 #endif /* HAVE_LIBLINK_GRAMMAR */
+} catch (const Xapian::LinkGrammarError & e) {
+    cout << "Link Grammar dictionary error: " << e.get_msg() << endl;
+    exit(1);
 } catch (const Xapian::Error &e) {
     cout << e.get_description() << endl;
     exit(1);

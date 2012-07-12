@@ -24,6 +24,7 @@
 #ifdef HAVE_LIBLINK_GRAMMAR
 
 #include <xapian/linkgrammar.h>
+#include <xapian/error.h>
 #include "omassert.h"
 #include "constituents.h"
 #include <locale.h>
@@ -91,11 +92,8 @@ LinkGrammar::LinkGrammar(const string & language, const int seconds)
     parse_options_set_max_null_count(Opts, 2);
     Dict = dictionary_create_lang(language_);
     if (!Dict) {
-        error = "Unable to open the dictionary";
-        // FIXME: Incorporate this error into Xapian's error handling.
-        // I presently am not able to figure out as to how to add the errors,
-        // since error.h is a generated file !
-        throw error;
+        error = "Unable to open the dictionary.";
+        throw LinkGrammarError(error);
     }
     parse_options_set_max_parse_time(Opts, seconds);
 }
