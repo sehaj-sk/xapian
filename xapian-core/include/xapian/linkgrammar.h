@@ -164,7 +164,7 @@ class XAPIAN_VISIBILITY_DEFAULT LinkGrammar {
      *          (Example: "playing")
      */
     const char * get_subscript(const char * linkage_word,
-                    const char * sentence_word);
+                    const char * sentence_word) const;
 
     /** Finds POS from the given subcript.
      *
@@ -172,7 +172,7 @@ class XAPIAN_VISIBILITY_DEFAULT LinkGrammar {
      *
      * @param subscript     The subscript from which the POS is to be found.
      */
-    pos_type get_pos_from_subscript(const std::string subscript);
+    pos_type get_pos_from_subscript(const std::string subscript) const;
 
     /** Finds the Noun Phrases present in the sentence.
      *
@@ -181,7 +181,7 @@ class XAPIAN_VISIBILITY_DEFAULT LinkGrammar {
      * @param linkage   The linkage from which the Noun Phrases have to be
      *          extracted.
      */
-    std::list<std::string> get_NP(Linkage linkage);
+    std::list<std::string> get_NP(Linkage linkage) const;
 
     /** A recursive tree traversal for finding the strings corresponding to
      *  Noun Phrase.
@@ -193,7 +193,7 @@ class XAPIAN_VISIBILITY_DEFAULT LinkGrammar {
      *  @param current_root     The pointer to the current root of the subtree.
      */
     std::list<std::string> traverse_for_NP(std::list<std::string> list_NP,
-                                CNode * current_root);
+                                CNode * current_root) const;
 
     /** Checks if the Noun Phrase is present at the leaf of the Tree.
      *
@@ -230,7 +230,7 @@ class XAPIAN_VISIBILITY_DEFAULT LinkGrammar {
      * @param root_of_subtree   The pointer to root of subtree where Noun Phrase
      *          has been detected.
      */
-    bool is_NP_leaf(CNode * root_of_subtree);
+    bool is_NP_leaf(CNode * root_of_subtree) const;
 };
 
 }

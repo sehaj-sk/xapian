@@ -290,7 +290,7 @@ LinkGrammar::set_default_linkage(const string & sentence) const
 
 const char *
 LinkGrammar::get_subscript(const char * linkage_word,
-    const char * sentence_word)
+    const char * sentence_word) const
 {
     if (strlen(linkage_word) > strlen(sentence_word)) {
         return linkage_word + strlen(sentence_word) + 1;
@@ -301,7 +301,7 @@ LinkGrammar::get_subscript(const char * linkage_word,
 
 
 LinkGrammar::pos_type
-LinkGrammar::get_pos_from_subscript(const string subscript)
+LinkGrammar::get_pos_from_subscript(const string subscript) const
 {
     size_t found;
 
@@ -322,7 +322,7 @@ LinkGrammar::get_pos_from_subscript(const string subscript)
 
 
 list<string>
-LinkGrammar::get_NP(Linkage linkage)
+LinkGrammar::get_NP(Linkage linkage) const
 {
     list<string> list_NP;
     CNode * root;
@@ -336,7 +336,7 @@ LinkGrammar::get_NP(Linkage linkage)
 
 
 list<string>
-LinkGrammar::traverse_for_NP(list<string> list_NP, CNode * current_root)
+LinkGrammar::traverse_for_NP(list<string> list_NP, CNode * current_root) const
 {
     CNode * current_node;
     bool is_NP = false;
@@ -368,7 +368,7 @@ LinkGrammar::traverse_for_NP(list<string> list_NP, CNode * current_root)
 
 
 bool
-LinkGrammar::is_NP_leaf(CNode *root_of_subtree)
+LinkGrammar::is_NP_leaf(CNode *root_of_subtree) const
 {
     CNode * iterate_children_list;
     for (iterate_children_list = root_of_subtree->child;
