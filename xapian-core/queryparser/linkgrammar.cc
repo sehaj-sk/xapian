@@ -288,7 +288,7 @@ LinkGrammar::set_default_linkage(const string & sentence) const
 }
 
 
-string
+const char *
 LinkGrammar::get_subscript(const char * linkage_word,
     const char * sentence_word)
 {

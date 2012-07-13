@@ -163,7 +163,7 @@ class XAPIAN_VISIBILITY_DEFAULT LinkGrammar {
      *          sentence. Hence the subscript is not present in it.
      *          (Example: "playing")
      */
-    std::string get_subscript(const char * linkage_word,
+    const char * get_subscript(const char * linkage_word,
                     const char * sentence_word);
 
     /** Finds POS from the given subcript.
