@@ -25,14 +25,20 @@
 #include <xapian/document.h>
 #include <xapian/queryparser.h>
 #include <xapian/unicode.h>
+#include <xapian/linkgrammar.h>
+#include <xapian/error.h>
 
 #include "stringutils.h"
 
 #include <limits>
 #include <string>
+#include <cstring>
 
 #include "cjk-tokenizer.h"
-#include <xapian/linkgrammar.h>
+
+#ifdef HAVE_ICUUC
+#include <unicode/brkiter.h>
+#endif
 
 using namespace std;
 
@@ -323,12 +329,12 @@ endofterm:
     }
 }
 
-
 #ifdef HAVE_LIBLINK_GRAMMAR
+
 void
-TermGenerator::Internal::index_text_with_POS(const string & text,
-                    termcount wdf_inc,
-				    const string & prefix, bool with_positions)
+TermGenerator::Internal::index_sentence_with_POS(const string & sentence,
+                    termcount wdf_inc, const string & prefix,
+                    bool with_positions)
 {
     int stop_mode = STOPWORDS_INDEX_UNSTEMMED_ONLY;
     if (!stopper)
@@ -336,19 +342,14 @@ TermGenerator::Internal::index_text_with_POS(const string & text,
 
     LinkGrammar pos_tagger;
     list<LinkGrammar::pos_info_s> pos_info;
-
-    // TODO: Break the text into constituent sentences. I have done a
-    // look-around and have come across some alternatives. But need guidance
-    // as to which one to choose ?
-    // So at present it shall work only for a single sentence.
-    pos_info = pos_tagger.get_pos_sentence(text);
+    pos_info = pos_tagger.get_pos_sentence(sentence);
 
     // If the sentence fails to get tokenized or parsed, then the list
     // returned by get_pos_sentence() shall be empty.
     // Under such cases, simply use the index_text() for indexing that
     // sentence.
     if (pos_info.empty()) {
-        index_text(Utf8Iterator(text), wdf_inc, prefix, with_positions);
+        index_text(Utf8Iterator(sentence), wdf_inc, prefix, with_positions);
         return;
     }
 
@@ -358,7 +359,7 @@ TermGenerator::Internal::index_text_with_POS(const string & text,
     bool is_nonwordchar_inbetween;
 
     for (list<LinkGrammar::pos_info_s>::iterator it = pos_info.begin();
-        it != pos_info.end(); it++) {
+            it != pos_info.end(); it++) {
         temp_word.resize(0);
         is_nonwordchar_inbetween = false;
         word = it->word;
@@ -428,13 +429,13 @@ TermGenerator::Internal::index_text_with_POS(const string & text,
 
         word = temp_word;
         if (strategy == TermGenerator::STEM_SOME ||
-	        strategy == TermGenerator::STEM_NONE) {
-	        if (with_positions) {
-	            doc.add_posting(prefix + pos + word, ++termpos, wdf_inc);
-	        } else {
-	            doc.add_term(prefix + pos + word, wdf_inc);
-	        }
-	    }
+                strategy == TermGenerator::STEM_NONE) {
+            if (with_positions) {
+                doc.add_posting(prefix + pos + word, ++termpos, wdf_inc);
+            } else {
+                doc.add_term(prefix + pos + word, wdf_inc);
+            }
+        }
         if (pos.compare("NOUNPHRASE") == 0 )
             continue;
 
@@ -467,6 +468,40 @@ TermGenerator::Internal::index_text_with_POS(const string & text,
             doc.add_term(stem, wdf_inc);
         }
     }
+}
+
+void
+TermGenerator::Internal::index_text_with_POS(const string & text,
+                    termcount wdf_inc, const string & prefix,
+                    bool with_positions)
+{
+    #ifndef HAVE_ICUUC
+        throw TermGeneratorError("ICU breakiterator header file not found.");
+    #else
+        UnicodeString text_u = UnicodeString(text.c_str());
+        UErrorCode status = U_ZERO_ERROR;
+        BreakIterator * sentence_breaker;
+        sentence_breaker = BreakIterator::createSentenceInstance(Locale::getUS(),
+                                                                    status);
+        if (U_FAILURE(status)) {
+            throw TermGeneratorError("Failed to create sentence break iterator.");
+        }
+        sentence_breaker->setText(text_u);
+        int32_t start_sentence = sentence_breaker->first();
+        int32_t end_sentence, length_sentence;
+        char * sentence;
+        for (end_sentence = sentence_breaker->next();
+                end_sentence != BreakIterator::DONE;
+                start_sentence = end_sentence,
+                end_sentence = sentence_breaker->next()) {
+            length_sentence = end_sentence - start_sentence;
+            sentence = new char[length_sentence + 1];
+            length_sentence = text_u.extract(start_sentence, length_sentence,
+                                                sentence, "");
+            index_sentence_with_POS(sentence, wdf_inc, prefix, with_positions);
+            delete [] sentence;
+        }
+    #endif /* HAVE_ICUUC */
 }
 #endif /* HAVE_LIBLINK_GRAMMAR */
 }
