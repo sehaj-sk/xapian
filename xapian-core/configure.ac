@@ -529,6 +529,8 @@ dnl AC_SUBST(DL_LIBS)
 
 AC_CHECK_LIB(link-grammar, linkage_create)
 
+AC_CHECK_HEADER([unicode/brkiter.h], [AC_DEFINE([HAVE_ICUUC], [1], [Define if the header file is found])  LIBS="-licuuc $LIBS"], [], [])
+
 dnl Checks for header files.
 AC_CHECK_HEADERS([fcntl.h limits.h sys/errno.h sys/select.h], [], [], [ ])
 
