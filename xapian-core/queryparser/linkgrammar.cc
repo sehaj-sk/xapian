@@ -42,13 +42,19 @@ using namespace std;
 /********************************************************************
  **  Subscript     ****         Meaning                            **
  ********************************************************************
+ *    m            ****   Given names that are always masculine     *
+ *    f            ****   Given names that are always feminine      *
+ *    b            ****   Given names that can be masculine or      *
+ *                        feminine                                  *
+ *    l            ****   Location (cities, states, towns, etc.)    *
+ *    s            ****   US state names and abbreviations          *
  *    n            ****   Noun                                      *
  *    n-u          ****   Noun, uncountable (mass noun)             *
  *    p            ****   Plural count nouns                        *
  *    s            ****   Singular, mass or count nouns             *
  *    o            ****   Organizations (corporations)              *
  ********************************************************************/
-static const string Noun = "n n-u p s o";
+static const string Noun = "m f b l s n n-u p s o";
 
 /********************************************************************
  **  Subscript     ****         Meaning                            **
