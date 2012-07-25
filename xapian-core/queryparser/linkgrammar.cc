@@ -303,18 +303,16 @@ LinkGrammar::get_subscript(const char * linkage_word,
 LinkGrammar::pos_type
 LinkGrammar::get_pos_from_subscript(const string subscript) const
 {
-    size_t found;
-
-    if ((found = Noun.find(subscript)) != string::npos)
+    if (Noun.find(subscript) != string::npos)
         return NOUN;
 
-    if ((found = Verb.find(subscript)) != string::npos)
+    if (Verb.find(subscript) != string::npos)
         return VERB;
 
-    if ((found = Adjective.find(subscript)) != string::npos)
+    if (Adjective.find(subscript) != string::npos)
         return ADJECTIVE;
 
-    if ((found = Adverb.find(subscript)) != string::npos)
+    if (Adverb.find(subscript) != string::npos)
         return ADVERB;
 
     return NONE;
