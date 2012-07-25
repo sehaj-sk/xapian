@@ -30,6 +30,7 @@
 #include "stringutils.h"
 #include "xapian/error.h"
 #include "xapian/unicode.h"
+#include "xapian/linkgrammar.h"
 
 // Include the list of token values lemon generates.
 #include "queryparser_token.h"
@@ -41,6 +42,8 @@
 #include <limits>
 #include <list>
 #include <string>
+#include <sstream>
+#include <iterator>
 
 using namespace std;
 
@@ -816,6 +819,226 @@ QueryParser::Internal::parse_query(const string &qs, unsigned flags,
     }
 
     ParserHandler pParser(ParseAlloc());
+
+    // Algorithm:
+    //
+    // *Step-1*: Obtain the list of words along with their POS using LinkGrammar
+    //           interface.
+    //           If list is empty (meaning that LinkGrammar was not able to
+    //           find any proper linkages for this query) then break the query
+    //           at whitespaces, considering each token as word with no POS.
+    //
+    // *Step-2*: Obtain a query using the words and their POS (excluding
+    //           Noun-Phrases). For this only three terminals are used - TERM,
+    //           GROUP_TERM and PHRASED_TERM. The POS of the words are prefixed
+    //           to them. Care is taken for stopwords.
+    //
+    // *Step-3*: Obtain a query by combining all the Noun-Phrases with OP_OR.
+    //           Here also, care is taken for stopwords.
+    //
+    // *Step-4*: Combine above two queries using OP_OR. This is the final query.
+    //
+    // *NOTE*:   Since this flag represents unstructured queries, i.e. natural
+    //           language queries, thus brackets, love, hate, quotes etc. are
+    //           not treated separately.
+    //           Forming/Parsing of terms from the words and their corresponding
+    //           POS is in accordance to the way indexing is done via
+    //           index_text_with_POS().
+    if (flags & FLAG_FREE_FORM) {
+        LinkGrammar pos_tagger;
+        list<LinkGrammar::pos_info_s> pos_info;
+        pos_info = pos_tagger.get_pos_sentence(qs);
+
+        // Handle the case when the list returned is empty (meaning that
+        // LinkGrammar was not able to find any proper linkages for this query).
+        if (pos_info.empty()) {
+            istringstream temp_stream(qs);
+            list<string> temp_pos_info;
+            copy(istream_iterator<string>(temp_stream),
+                    istream_iterator<string>(),
+                    back_inserter<list<string> >(temp_pos_info));
+
+            for (list<string>::iterator temp = temp_pos_info.begin();
+                    temp != temp_pos_info.end(); temp++)
+                pos_info.push_back(LinkGrammar::pos_info_s(*temp, LinkGrammar::NONE));
+        }
+
+        string word, pos, term, term_lowercase;
+        Utf8Iterator checker, checker_backup;
+        int token;
+        list<string> NP_list;
+        bool was_acronym, is_cjk_term, is_nonwordchar_inbetween, is_next_phrase, was_previous_phrase;
+        stem_strategy stem_term;
+        const PrefixInfo * prefix_info = prefix_stack.back();
+        Term * term_obj;
+
+        enum {DEFAULT, IN_GROUP, IN_PHRASED_TERM} mode_new = DEFAULT;
+
+        for (list<LinkGrammar::pos_info_s>::iterator lg_it = pos_info.begin();
+                lg_it != pos_info.end(); lg_it++) {
+            term.resize(0);
+            is_nonwordchar_inbetween = false;
+            was_previous_phrase = false;
+            word = lg_it->word;
+            pos = pos_tagger.pos_to_string(lg_it->pos);
+            checker = Utf8Iterator(word);
+            if (pos.compare("NOUNPHRASE") == 0)
+                goto parse_NP;
+
+            {
+            // Label used for parsing the words.
+            parse_word:
+                term.resize(0);
+                checker_backup = checker;
+                if (checker != end && !is_wordchar(*checker)) {
+                    mode_new = DEFAULT;
+                    while (checker != end && !is_wordchar(*checker))
+                        ++checker;
+                }
+
+                while (checker != end && is_wordchar(*checker))
+                    Unicode::append_utf8(term, *checker++);
+ 
+                // Consisting of only non-word character(s).
+                if (term.empty())
+                    continue;
+
+                if (checker != end && !is_wordchar(*checker)) {
+                    checker = checker_backup;
+                    is_nonwordchar_inbetween = true;
+                    // Call parse_term() and use the value returned;
+                    term = parse_term(checker, end, cjk_ngram, is_cjk_term,
+                                was_acronym);
+                    // If there is/are phrase generator characeter(s) followed
+                    // immediately by a wordchar, then treat it as PHR_TERM
+                    // and not as TERM or GROUP_TERM.
+                    if (is_phrase_generator(*checker)) {
+                        do {
+                            ++checker;
+                        } while (is_phrase_generator(*checker));
+                        // Treat it as phrase generator only if immediately
+                        // followed by a word-character.
+                        if (checker != end && is_wordchar(*checker)) {
+                            mode_new = IN_PHRASED_TERM;
+                            is_next_phrase = true;
+                        }
+                    }
+                }
+
+                token = TERM;
+                if (mode_new == IN_GROUP) {
+                    token = GROUP_TERM;
+                } else if (!was_previous_phrase && is_next_phrase) {
+                    token = TERM;
+                } else if (was_previous_phrase) {
+                    token = PHR_TERM;
+                    was_previous_phrase = false;
+                }
+
+                term_lowercase = Unicode::tolower(term);
+                // Don't prefix POS if it is a stopword, or a phrase term
+                // or a term just before a phrase term or if there are non-word
+                // character(s) in-between the term.
+                if (!is_nonwordchar_inbetween && token != PHR_TERM &&
+                        !is_next_phrase && !(stopper &&
+                        (*stopper)(term_lowercase))) {
+                    term_lowercase = pos + term_lowercase;
+                    term = pos + term;
+                }
+
+                if (is_next_phrase) {
+                    is_next_phrase = false;
+                    was_previous_phrase = true;
+                }
+
+                stem_term = stem_action;
+                if (stem_term != STEM_NONE) {
+                    if (!stemmer.internal.get()) {
+                        // No stemmer is set.
+                        stem_term = STEM_NONE;
+                    } else if (stem_term == STEM_SOME) {
+                        if (!should_stem(term_lowercase) ||
+                            (checker != end && is_stem_preventer(*checker))) {
+                            // Don't stem this particular term.
+                            stem_term = STEM_NONE;
+                        }
+                    }
+                }
+
+                // FIXME: Can some other constructor of class Term be used here.
+                // If so, then that might be more efficient.
+                term_obj = new Term(&state, term_lowercase, prefix_info, term,
+                                        stem_term, term_pos++);
+
+                Parse(pParser, token, term_obj, &state);
+
+                if (checker == end) {
+                    if (mode_new == IN_PHRASED_TERM) {
+                        // Going to next word and currently mode_new is
+                        // IN_PHRASED_TERM. So set it to DEFAULT.
+                        mode_new = DEFAULT;
+                    } else {
+                        // Going to next word, and the currently mode_new is
+                        // not IN_PHRASED_TERM. So set it to IN_GROUP.
+                        mode_new = IN_GROUP;
+                    }
+                    continue;
+                }
+
+                // Word consists of non-word character(s) inside it.
+                goto parse_word;
+           }
+
+            // Label used for parsing the Noun-Phrases.
+            parse_NP:
+                if (checker != end && !is_wordchar(*checker)) {
+                    if (is_nonwordchar_inbetween) {
+                        is_nonwordchar_inbetween = false;
+                        Unicode::append_utf8(term, '#');
+                    }
+                    while (checker != end && !is_wordchar(*checker))
+                        ++checker;
+                }
+
+                while (checker != end && is_wordchar(*checker))
+                    Unicode::append_utf8(term, Unicode::tolower(*checker++));
+
+                // Consisting of only non-word character(s).
+                if (term.empty())
+                    continue;
+
+                if (checker != end && is_whitespace(*checker)) {
+                    do {
+                        ++checker;
+                    } while (checker != end && is_whitespace(*checker));
+                    // Don't use '#' for trailing whitespace(s).
+                    if (checker != end)
+                        Unicode::append_utf8(term, '#');
+                }
+
+                if (checker == end) {
+                    while (term[term.length() - 1] == '#')
+                        term.erase(term.length() - 1);
+
+                    // Ignore the term if it is a stopword.
+                    if (!(stopper && (*stopper)(term))) {
+                        NP_list.push_back(default_prefix + "NOUNPHRASE" + term);
+                    }
+                    continue;
+                }
+
+                // There was either a whitespace or non-word character(s)
+                // in-between.
+                if (term[term.length() != '#'])
+                    is_nonwordchar_inbetween = true;
+                goto parse_NP;
+        }
+            if (!state.error)
+                Parse(pParser, 0, NULL, &state);
+            errmsg = state.error;
+            return Query(Query::OP_OR, state.query, Query(Query::OP_OR,
+                            NP_list.begin(), NP_list.end()));
+    }
 
     unsigned newprev = ' ';
 main_lex_loop:

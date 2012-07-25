@@ -565,6 +565,22 @@ class XAPIAN_VISIBILITY_DEFAULT QueryParser {
 	  */
 	 FLAG_ERROR_RECOVERY = 2048,
 
+	 /** For unstructured query, i.e. natural language query.
+	  *
+	  * This flag is used for queries that don't follow the rules of
+	  * the syntax of queryparser and are of free form. LinkGrammar is
+	  * used for finding POS of different words. Noun-Phrases are
+	  * also considered.
+	  *
+	  * Since this flag is for free form queries, hence normal rules of
+	  * queryparser like '+' denotes LOVE, '-' denotes HATE etc. don't
+	  * apply here. Thus while scanning, brackets, love, hate, quotes
+	  * etc. are not treated separately.
+	  *
+	  * Under this flag, only normal terms and phrased terms are considered.
+	  */
+	 FLAG_FREE_FORM = 4096,
+
 	FLAG_DEFAULT = FLAG_PHRASE|FLAG_BOOLEAN|FLAG_LOVEHATE|FLAG_ERROR_RECOVERY
     } feature_flag;
 
