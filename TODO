@@ -178,3 +178,24 @@ Making changes as per the reviews on the commits by Dan.
 
 Attending to the Fixme's present in the current implementation, removing
 any bugs and doing modifications.
+
+Explored options for Sentence Breaking Implementation.
+
+Went through and got familiarized with the Sentence Break Iterator of ICU.
+
+Check for breakiterator class of ICU in configure script.
+
+Integrated the Sentence Break Iterator of ICU in the existing POS based
+indexing in termgenerator.
+
+Integrating the Link Grammar in QueryParser.
+
+Completing the integration and testing it.
+
+Testing.
+
+Fixed some bugs.
+
+Added testcases for LinkGrammar integration.
+
+DOING - Merging with the main branch and resolving conflicts.
