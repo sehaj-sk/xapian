@@ -1462,6 +1462,87 @@ The corresponding grammar rule is::
     group ::= group EMPTY_GROUP_OK
 
 
+
+The Lexer
+==========
+
+QueryParser has a self written lexer which iterates through the input query,
+determines the Tokens and calls the parser ( to be precise, calls the method
+`Parse`_ ) each time a new Token is determined, along with the information
+of that Token.
+
+The lexer uses the enum mode to keep track of the present state and the
+information of the past Token(s).::
+
+    enum {
+	DEFAULT, IN_QUOTES, IN_PREFIXED_QUOTES, IN_PHRASED_TERM, IN_GROUP,
+	IN_GROUP2, EXPLICIT_SYNONYM
+    } mode = DEFAULT;
+
+The default value of mode is DEFAULT.
+
+Following is the information regarding each of them :
+
+
+DEFAULT
+++++++++
+This is the default value of mode.
+
+
+IN_QUOTES
+++++++++++
+If ' ``"`` ' character detected along with the conditions that are required
+for Quotes (as mentioned above in `QUOTE`_ ), then the mode is set to this
+one and parser is called with parameters as::
+
+
+     Parse(pParser, QUOTE, NULL, &state);
+
+
+IN_PREFIXED_QUOTES
+++++++++++++++++++++
+Same as `IN_QUOTES`_, and the method `Parse`_ is called with same parameters.
+
+The only difference is that it corresponds to a case like
+
+    subject:"space flight"
+
+where "``subject``" corresponds to a filter.
+
+
+IN_PHRASED_TERM
+++++++++++++++++
+The character is tested for phrase generator (as mentioned above in `PHR_TERM`_
+), and if it is, then the mode is set to this one and the parser is called
+with the parameters as::
+
+    Parse(pParser, PHR_TERM, term_obj, &state);
+
+
+IN_GROUP
++++++++++
+If the we have a term, and we detect another term such that they are separated
+only via whitespace, then this mode is set.
+
+
+IN_GROUP2
+++++++++++
+This is same as `IN_GROUP`_ with the difference that this corresponds to
+the case when we have more than two terms separated via whitespace.
+
+
+EXPLICIT_SYNONM
+++++++++++++++++
+If ' ``~`` ' character is detected along with the conditions that are
+required for Synonyms (as described above in `SYNONYM`_), then the mode is
+set to this one and the parser is called with parameters as::
+
+
+    Parse(pParser, SYNONYM, NULL, &state);
+
+
+
+
 Bibliography
 =============
 
