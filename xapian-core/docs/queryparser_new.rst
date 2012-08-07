@@ -768,6 +768,700 @@ Following are the grammar rules of QueryParser , listed together in the order::
 
 
 
+TERMINALS
+++++++++++
+
+In Lemon a terminal symbol (token) is any string of alphanumeric and underscore
+characters that begins with an upper case letter.
+
+In Lemon,ALL Terminals must have the same type (as mentioned above, in
+Xapian, each terminal has the type `Class Term`_ thus all the information
+corresponding to a token is stored in the corresponding Term object) but
+Non-Terminals can have their own (different) types/values.
+
+
+The QueryParser grammar has the following 23 TERMINALS :
+
+_`ERROR`
+---------
+Used to represent an error in the query i.e. a malformed query.
+
+For Example, the Boolean Operators (AND, OR etc. ) require the syntax to be
+of type ``<expression> Operator <expression>``, if it is not so, then that
+corresponds to `ERROR`_
+
+_`OR`
+------
+
+This matches the documents which are matched by either of the subqueries.
+
+Example Query::
+
+    A OR B
+
+Which Documents are Matched ?
+    Matches documents which match query A or B (or both)
+
+How is the Weight of the Documents Adjusted ?
+    Matched documents are given the sum of weights from A and B
+
+_`XOR`
+-------
+
+This matches the documents which are matched by one or the other subquery,
+but not both.
+
+Example Query::
+
+    A XOR B
+
+Which Documents are Matched ?
+    Matches documents which match query A or B (but not both)
+
+How is the Weight of the Documents Adjusted ?
+    Matched documents are given the weight from A or B, depending which one
+    it matches.
+
+_`AND`
+-------
+
+This matches the documents which are matched by both the subqueries.
+
+Example Query::
+
+    A AND B
+
+Which Documents are Matched ?
+    Matches documents which match both query A and B
+
+How is the Weight of the Documents Adjusted ?
+    Matched documents are given the sum of weights from A and B
+
+_`NOT`
+-------
+
+This matches the documents that are matched only by first subquery and not
+the second subquery.
+
+Example Query::
+
+    A NOT B
+
+Another Equivalent Query::
+
+    A AND NOT B
+
+Which Documents are Matched ?
+    Matches documents which match query A but not B
+
+How is the Weight of the Documents Adjusted ?
+    Matched documents are given the weight from A only
+
+If FLAG_PURE_NOT is enabled, then queries like ``NOT subquery`` can be
+used. This matches the documents that are not matched
+by the subquery
+
+_`NEAR`
+--------
+
+This matches documents containing the both the words - word1 and word2
+such that they are within 10 words of each other. The default value of NEAR
+operator is 10.
+
+Example Query::
+
+    A NEAR B
+
+Which Documents are Matched ?
+    Matches documents which matches A within 10 words(if default value i.e. 10
+    is used) of B.
+
+How is the Weight of the Documents Adjusted ?
+    Matched documents are given the weight of A+B
+
+We can change the default value by using NEAR/n which corresponds to the token
+``NEAR(N)``.
+
+Example Query::
+
+    word1 NEAR/5 word2
+
+This matches documents containing the both the words - word1 and word2 such
+that they are within 5 words of each other.
+
+_`ADJ`
+-------
+
+ADJ is similar to NEAR with the difference that it matches ONLY IF the words
+specified in the query with ADJ operator appear in **same order** as
+mentioned in the query.
+
+For Example, if I have a document containing::
+
+    xapian parser provides a new stemming strategy
+
+Then all the following three queries will match this document::
+
+    xapian NEAR strategy
+    strategy NEAR xapian
+    xapian ADJ strategy
+
+But the query::
+
+    strategy ADJ xapian
+
+will NOT MATCH this document.
+
+Similar to NEAR the default value of ADJ is 10. It can be changed to n by
+a query like following::
+
+    word1 ADJ/n word2
+
+The ADJ/n corresponds to ``ADJ(n)`` token.
+
+
+_`LOVE`
+--------
+
+If ``FLAG_LOVEHATE`` is enabled then '``+``' after a whitespace or an open
+bracket corresponds to the token ``LOVE`` but
+with following conditions:
+
+ - If "+" is followed by space, then it is ignored.
+    For Example, in the following case token LOVE is detected::
+
+        Query: xapian +strategy
+        Query object formed: strategy@2 AND_MAYBE xapian@1
+
+    But in this case::
+
+        Query: xapian + strategy
+        Query object formed: xapian@1 OR strategy@2
+
+    the "+" is followed by a whitespace and thus
+    not detected as a LOVE token.
+
+ - A Postfix "+" (such as in google+) is not treated as a LOVE token.
+    Under such case, the character "+" is regarded as a part of the term
+    only by the lexer.
+
+    For example in the following case "+" is treated as the part of the term
+    google only and not as a separate token::
+
+        Query: profile google+
+        Query object formed: profile@1 OR google+@2
+
+ - Ignored if present at the end of the query.
+
+Example query::
+
+    xapian +strategy
+
+The above query returns the query following query object::
+
+    "strategy@2 AND_MAYBE xapian@1".
+
+
+Consider::
+
+    A AND_MAYBE B
+
+Which Documents are Matched?
+    Matches documents which matches A or (A and B).
+
+How is the Weight of Documents Adjusted?
+    Documents which match A and B, are given the weight of A+B
+
+    Documents which match A only, are given the weight of A
+
+    Documents which match B only are ignored
+
+
+_`HATE`
+--------
+
+If ``FLAG_LOVEHATE`` is enabled then "``-``" after a whitespace or an open
+bracket corresponds to the token HATE but with
+the following conditions:
+
+ - If "-" is followed by space, then it is ignored.
+    For Example, in the following case, the token HATE is detected::
+
+        Query: xapian -strategy
+        Query object formed: xapian@1 AND_NOT strategy@2"
+
+    But in this case::
+
+        Query: xapian - strategy
+        Query object formed: xapian@1 OR strategy@2
+
+    the "-" is followed by a whitespace and thus not detected as a HATE token.
+
+ - A Postfix - (such as in xapian-) is not treated as a HATE token.
+    Under such case, the character "-" is simply ignored by the lexer and
+    is not regarded as a part of the term.
+
+    For example, In the following case::
+
+        Query: xapian- core
+        Query object formed: xapian@1 OR core@2
+
+    "-" is simply ignored and is not treated as the part of the term xapian
+    or as a separate token.
+
+ - Ignored if present at the end of the query.
+
+Example query::
+
+    xapian -strategy
+
+The above query returns the following query object::
+
+    xapian@1 AND_NOT strategy@2
+
+
+Consider::
+
+    A AND_NOT B
+
+Which Documents are Matched?
+    Matches the documents which match query A but not B.
+
+How is the Weight of Documents Adjusted?
+    Matched documents are given the weight from A only.
+
+
+_`HATE_AFTER_AND`
+-------------------
+
+If ``FLAG_LOVEHATE`` is enabled then "``-``" after AND operator corresponds
+to the token HATE_AFTER_AND.
+
+
+_`SYNONYM`
+-----------
+
+If ``FLAG_SYNONYM`` is enabled then "``~``" after a whitespace, +, -, or an
+open bracket corresponds to the token SYNONYM
+but with the following conditions:
+
+ - It is ignored if not followed by a word character.
+    For example, Consider the database in which we have specified "``happy``"
+    and "``cheerful``" as synonyms.
+
+    Then in the following case, the query object will be formed so since
+    here the token SYNONYM has been detected::
+
+        Query: ~happy
+        Query object formed: happy@1 SYNONYM cheerful@1
+
+    But in this case::
+
+        Query: ~ happy
+        Query object formed: happy@1
+
+    the "-" is followed by a whitespace and thus not detected as a SYNONYM
+    token.
+
+ - Ignored if present at the end of the query.
+
+
+Example query
+
+**NOTE**: we must call `set_database()`_ for this to work. Also we need
+to add the synonyms to the document. This can be done as follow::
+
+    Xapian::WritableDatabase db(@param);
+    db.add_synonym("happy", "cheerful");
+    Xapian::QueryParser qp;
+    qp.set_database(db);
+
+Now if we give a query::
+
+    ~happy
+
+then the Query object returned is::
+
+    happy@1 SYNONYM cheerful@1
+
+
+SYNONYM is identical to OR except for the weightings returned.
+
+Which Documents are Matched?
+    Matches documents that match at least one of the queries.
+
+How is the Weight of Documents Adjusted?
+    Documents are weighted as if all the sub-queries are are instances of
+    the same term, so multiple matching terms increase the wdf value used,
+    and the term frequency is based on the number of documents which will
+    match an OR of all the subqueries.
+
+
+_`TERM`
+--------
+
+TERM is a query term, including prefix (if any).
+
+_`GROUP_TERM`
+---------------
+
+GROUP_TERM is a query term which follows a TERM or another GROUP_TERM and
+is only separated by whitespace characters.
+
+
+_`PHR_TERM`
+-------------
+
+PHR_TERM is a query term which follows a TERM or another PHR_TERM and is
+separated only by one or more phrase generator
+characters (hyphen and apostrophe are common examples).
+
+_`Phrase generator characters` (tested via `is_phrase_generator()`_ ) are the
+characters that generate a phrase search.
+
+
+Currently Xapian supports the following characters as phrase generator::
+
+    '.' , '-' , '/' , ':' , '\\' , '@'
+
+The phrase operator allows for searching for a specific phrase and returns
+only matches where all terms appear in th document, in the correct order,
+giving a weight of the sum of each term.
+
+For example, The query object::
+
+    a@1 PHRASE 3 b@2 PHRASE 3 c@3
+
+matches the documents which match A followed by B followed by C and gives
+them a weight of A+B+C.
+
+
+.. _above:
+
+*Examples of phrase search* :
+
+ - The following case generates phrase query since '.' is a phrase generator::
+
+       Query: xapian.org
+       Query object formed: xapian@1 PHRASE 2 org@2
+
+ - The following case generates a phrase query since the words of the query
+ are enclosed in quotes::
+
+       Query: "A B C"
+       Query object formed: a@1 PHRASE 3 b@2 PHRASE 3 c@3
+
+ - The following case also generates a phrase query since '/' is a phrase
+ generator::
+
+       Query: /home/user/xapian/xapian-core
+       Query object formed: home@1 PHRASE 5 user@2 PHRASE 5 xapian@3 PHRASE
+       5 xapian@4 PHRASE 5 core@5
+
+
+Phrase search also plays an important role with the filters.
+
+For Example suppose we add the filter (non-boolean) for field "``title``"
+by mapping it to prefix "``T``" (by doing
+``qp.add_prefix("title","T")``),
+
+Then in the following case, the whole title is treated as a single entity
+since the words are connected by ``OP_PHRASE`` and also that all words are
+prefixed by "T"::
+
+    Query: title:"Harry Potter and the Chamber of Secrets"
+    Query object returned: Tharry@1 PHRASE 7 Tpotter@2 PHRASE 7 Tand@3 PHRASE
+    7 Tthe@4 PHRASE 7 Tchamber@5 PHRASE 7 Tof@6 PHRASE 7 Tsecrets``" i.e.
+
+Whereas in this case::
+
+    Query: title:Harry Potter and the Chamber of Secrets
+    Query object returned: Tharry@1 OR potter@2 OR and@3 OR the@4 OR chamber@5
+    OR of@6 OR secrets@7
+
+the whole title is not treated as a single entity since the words are
+connected by OP_OR and also all words are not prefixed by "T".
+
+**Note**: For the phrase searches, FLAG_PHRASE should be enabled. (By default
+it is enabled)
+
+
+
+Consider::
+
+    A OP_PHRASE B OP_PHRASE C
+
+Which Documents are Matched? :
+    Matches documents that match A followed by B followed by C.
+
+How is the Weight of Documents Adjusted?
+    Matched documents are are given a weight of A+B+C.
+
+
+_`WILD_TERM`
+-------------
+
+WILD_TERM is like a TERM, but has a trailing wildcard which needs to be
+expanded. It is used to match any number of trailing characters within a term
+(Right Truncation).
+
+**Note**: Like in the case of synonyms, for the wildcard expansion we must
+call `set_database()`_ . Also the wildcard expansion works ONLY IF
+``FLAG_WILDCARD`` is enabled. (By default, it is
+not enabled).
+
+You can limit the number of terms a wildcard will expand to by calling
+`Xapian::QueryParser::set_max_wildcard_expansion()`_
+
+If a wildcard expands to more terms than that number, an exception will be
+thrown. The exception may be thrown by the
+QueryParser, or later when Enquire handles the query. The default is not to
+limit the expansion.
+
+*Example of wildcard query* :
+
+Consider our database contains the terms::
+
+    "code" , "coding" , "coded" , "coder" , "codomain" , "codomain_new"
+
+Then the query::
+
+    cod*
+
+will return the following Query object::
+
+    code@1 SYNONYM coded@1 SYNONYM coder@1 SYNONYM coding@1 SYNONYM codomain@1
+    SYNONYM codomain_new@1
+
+
+
+_`PARTIAL_TERM`
+-----------------
+
+PARTIAL_TERM is like a TERM, but it's at the end of the query string and
+we're doing "search as you type". It refers to
+the final term of a partial match query, with no following characters and
+is thus treated as a wildcard, thus expands to
+something like WILD_TERM.
+
+Partial matching causes the parser to treat the query as a "*partially
+entered*" search.
+
+
+This will automatically treat the final word as a wildcard match, unless it
+is followed by whitespace, to produce more
+stable results from interactive searches.
+
+**Note** : ``FLAG_PARTIAL`` should be enables to support the partial term query
+
+*Example of partial term query* :
+
+Consider the same database as used above in wildcard query. Our database
+contains the terms::
+
+    "code" , "coding" , "coded" , "coder" , "codomain" , "codomain_new"
+
+Then the query::
+
+    I am a cod
+
+will treat the last word of the query ("``cod``") as wildcard term and thus
+return the following Query object::
+
+    (i@1 OR am@2 OR a@3) OR ((code@4 SYNONYM coded@4 SYNONYM coder@4 SYNONYM
+    coding@4 SYNONYM codomain@4 SYNONYM codomain_new@4) OR cod@4)
+
+The problem with this kind of search is that the last word in a partially
+entered query often has no semantic relation to the completed word. For
+example, a search for "``dynamic cat``" would return a quite different
+set of results to a search for "``dynamic categorisation``". This results
+in the set of results displayed flicking rapidly as each new character is
+entered. A much smoother result can be obtained if the final word is treated
+as having an implicit terminating wildcard, so that it matches all words
+starting with the entered characters - thus, as each letter is entered,
+the set of results displayed narrows down to the desired subject.
+
+A similar effect could be obtained simply by enabling the wildcard matching
+option, and appending a "*" character to each query string. However,
+this would be confused by searches which ended with punctuation or other
+characters.
+
+
+
+_`BOOLEAN_FILTER`
+-------------------
+
+BOOLEAN_FILTER is a query term with a prefix registered using
+`add_boolean_prefix()`_
+
+It's added to the query using an OP_FILTER operator,(or OP_AND_NOT if it's
+negated) for example, ``site:xapian.org`` or ``-site:xapian.org``.
+
+For example, Suppose in our database, we make the field "``site``" a Boolean
+filter::
+
+    qp.add_boolean_prefix("site","S")
+
+Now consider the following query::
+
+    watches site:google
+
+The above query will return the following Query object::
+
+    watches@1 FILTER Sgoogle
+
+The corresponding search will return all the documents from site google ONLY
+(and not any other site since we made "site" a boolean filter) which have
+the term "watches" in it.
+
+The operator ``OP_FILTER`` (corresponding to FILTER ) is used (and not OP_OR)
+since the type of prefix is BOOLEAN_EXCLUSIVE.
+
+If there are boolean filters for different prefixes, they will be combined
+with the Xapian::Query::OP_AND operator.
+
+For example, Consider the same database with the fields "site" and
+"description".
+
+Let us make both of these boolean filters with DIFFERENT prefixes::
+
+    qp.add_boolean_prefix("site","S");
+    qp.add_boolean_prefix("title","T");
+
+Now consider the following query::
+
+    watches site:google title:sale
+
+The above query will return the following Query object::
+
+    watches@1 FILTER (Sgoogle AND Tsale).
+
+If multiple boolean filters are specified in a query for the same prefix,
+they will be combined with the Xapian::Query::OP_OR
+operator.
+
+For example, Consider the same database with the fields "``site``" and
+"``description``".
+
+Let us make both of these boolean filters with SAME prefixes::
+
+    qp.add_boolean_prefix("site","S");
+    qp.add_boolean_prefix("title","S");
+
+Now consider the following query::
+
+    watches site:google title:sale
+
+The above query will return the following Query object::
+
+    watches@1 FILTER (Sgoogle OR Ssale)
+
+It is also possible to make multiple boolean filters specified for SAME
+prefixes to be combined with OP_AND (and not with
+OP_OR as is in the case above).
+
+This corresponds to the case where the document can have multiple terms with
+this prefix, so multiple filters should be
+combined with OP_AND, like happens with filters with different prefixes.
+
+For example, Consider the same database with the fields "site" and
+"description".
+
+Let us make both of these boolean filters with SAME prefixes::
+
+    qp.add_boolean_prefix("site","S");
+    qp.add_boolean_prefix("title","S",false);
+
+Now consider the following query::
+
+    watches site:google title:sale
+
+The above query will return the following Query object::
+
+    watches@1 FILTER (Sgoogle AND Ssale)
+
+
+
+_`RANGE`
+---------
+
+This token corresponds to a Range search.
+
+The QueryParser supports range searches on document values, matching documents
+which have values within a given range. There are several types of range
+processors available.
+
+To use a range, additional programming is required to tell the QueryParser
+what format a range is specified in and which value is to be searched for
+matches within that range. This then gives rise
+to the ability to specify ranges as:
+
+$10..50 5..10kg 01/01/1970..01/03/1970 size:3..7
+
+When date ranges are configured (as a DateValueRangeProcessor), you can
+configure which format dates are to be interpreted as (i.e. month-day-year)
+or otherwise.
+
+
+_`QUOTE`
+----------
+
+Characters ' ``"`` ' , left curly double quote(0x201c) and the right curly
+double quote(0x201d) match to the token QUOTE.
+
+An unmatched " at the end of the query is ignored to avoid generating an
+empty pair of QUOTEs which will cause a parse error.
+
+The grammar rule corresponding to the phrased searched is : **QUOTE phrase(P)
+QUOTE**. Examples of phrased search were
+given above_ .
+
+
+_`BRA`
+--------
+
+Character '``(``' after a whitespace, bracket , '+' or '-' matches to the
+token BRA with the following conditions:
+
+ - It is ignored if present at the end of the query.
+ - It is ignored if the case corresponds to empty ().
+
+The grammar rule corresponding to the bracketed expression is
+
+    compound_term ::= BRA expr KET
+
+
+_`KET`
+--------
+
+Character '``)``' represents the token KET. It represents the end of a
+bracketed expression.
+
+The grammar rule corresponding to the bracketed expression is::
+
+    compound_term ::= BRA expr KET
+
+
+_`CJKTERM`
+------------
+
+It corresponds to the case if CJK n-gram code is being used i.e. if
+`CJK::is_cjk_enabled()`_ is true and `CJK::codepoint_is_cjk(*itertor)`_
+returns true.
+
+
+_`EMPTY_GROUP_OK`
+-------------------
+
+This token corresponds to the end of group (a non-terminal), where group
+refers to a group of terms separated only by whitespace - candidates for
+multi-term synonyms
+
+The corresponding grammar rule is::
+
+    group ::= group EMPTY_GROUP_OK
+
+
 Bibliography
 =============
 
@@ -777,3 +1471,23 @@ _`Parse`
 <http://xapian.org/docs/sourcedoc/html/queryparser__internal_8cc.html#ee7aae42b4ccbfa6af14f369ccafbc69>
 
 _`ticket #521` <http://trac.xapian.org/ticket/521>
+
+_`Class Term` <http://xapian.org/docs/sourcedoc/html/classTerm.html>
+
+_`is_phrase_generator()`
+<http://xapian.org/docs/sourcedoc/html/queryparser__internal_8cc.html#ab60021d249d420797bf71899944a5d3>
+
+_`set_database()`
+<http://xapian.org/docs/sourcedoc/html/classXapian_1_1QueryParser.html#010f2b63522f063aa3b5f5645479d9e9>
+
+_`Xapian::QueryParser::set_max_wildcard_expansion()`
+<http://xapian.org/docs/sourcedoc/html/classXapian_1_1QueryParser.html#8e2bcb09952fbb2b713ef61e8eb6f638>`
+
+_`add_boolean_prefix()`
+<http://xapian.org/docs/sourcedoc/html/classXapian_1_1QueryParser.html#411cc8253c599b7d877749b8e814ee76>
+
+_`CJK::is_cjk_enabled()`
+<http://xapian.org/docs/sourcedoc/html/namespaceCJK.html#6d76ede0fd2a9ad3a12532d63c05caee>
+
+_`CJK::codepoint_is_cjk(*itertor)`
+<http://xapian.org/docs/sourcedoc/html/namespaceCJK.html#efab5934f6a82a989b994fad5068670d>
