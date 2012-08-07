@@ -649,6 +649,125 @@ In this case, the Query object formed is::
 	Query((Za@1 OR (Zb@2 AND_NOT Zc@3)))
 
 
+Grammar Rules
+++++++++++++++
+
+Following are the grammar rules of QueryParser , listed together in the order::
+
+	0.  query ::= expr.
+
+	1.  query ::= .
+
+	2.  expr ::= prob_expr.
+
+	3.  expr ::= bool_arg AND bool_arg.
+
+	4.  expr ::= bool_arg NOT bool_arg.
+
+	5.  expr ::= bool_arg AND NOT bool_arg.
+
+	6.  expr ::= bool_arg AND HATE_AFTER_AND bool_arg.
+
+	7.  expr ::= bool_arg OR bool_arg.
+
+	8.  expr ::= bool_arg XOR bool_arg.
+
+	9.  bool_arg ::= expr.
+
+	10. bool_arg ::= .
+
+	11. prob_expr ::= prob.
+
+	12. prob_expr ::= term.
+
+	13. prob ::= RANGE.
+
+	14. prob ::= stop_prob RANGE.
+
+	15. prob ::= stop_term stop_term.
+
+	16. prob ::= prob stop_term.
+
+	17. prob ::= LOVE term.
+
+	18. prob ::= stop_prob LOVE term.
+
+	19. prob ::= HATE term.
+
+	20. prob ::= stop_prob HATE term.
+
+	21. prob ::= HATE BOOLEAN_FILTER.
+
+	22. prob ::= stop_prob HATE BOOLEAN_FILTER.
+
+	23. prob ::= BOOLEAN_FILTER.
+
+	24. prob ::= stop_prob BOOLEAN_FILTER.
+
+	25. prob ::= LOVE BOOLEAN_FILTER.
+
+	26. prob ::= stop_prob LOVE BOOLEAN_FILTER.
+
+	27. stop_prob ::= prob.
+
+	28. stop_prob ::= stop_term.
+
+	29. stop_term ::= TERM.
+
+	30. stop_term ::= compound_term.
+
+	31. term ::= TERM.
+
+	32. term ::= compound_term.
+
+	33. compound_term ::= WILD_TERM.
+
+	34. compound_term ::= PARTIAL_TERM.
+
+	35. compound_term ::= QUOTE phrase QUOTE.
+
+	36. compound_term ::= phrased_term.
+
+	37. compound_term ::= group.
+
+	38. compound_term ::= near_expr.
+
+	39. compound_term ::= adj_expr.
+
+	40. compound_term ::= BRA expr KET.
+
+	41. compound_term ::= SYNONYM TERM.
+
+	42. compound_term ::= CJKTERM.
+
+	43. phrase ::= TERM.
+
+	44. phrase ::= CJKTERM.
+
+	45. phrase ::= phrase TERM.
+
+	46. phrase ::= phrase CJKTERM.
+
+	47. phrased_term ::= TERM PHR_TERM.
+
+	48. phrased_term ::= phrased_term PHR_TERM.
+
+	49. group ::= TERM GROUP_TERM.
+
+	50. group ::= group GROUP_TERM.
+
+	51. group ::= group EMPTY_GROUP_OK.
+
+	52. near_expr ::= TERM NEAR TERM.
+
+	53. near_expr ::= near_expr NEAR TERM.
+
+	54. adj_expr ::= TERM ADJ TERM.
+
+	55. adj_expr ::= adj_expr ADJ TERM.
+
+
+
 Bibliography
 =============
 
