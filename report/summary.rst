@@ -1,0 +1,218 @@
+==================
+Summary of Errors
+==================
+
+This doc is the summary detailing the parse errors which occur, while trying to
+parse the Real-World Queries present in `queryparsertest.cc`_, after disabling
+the "reparse with flags off" code. (Line 124, `queryparser.cc`_ )
+
+The results of finding out the parse errors didn't turned out as I had
+expected. The parse errors were really limited, opposite to what i had
+expected. Different reasons for parse error were really limited.
+
+Following are the different parse errors:
+
+1. The main problem is with the token BRA and the token KET . About 95%
+   of parse errors are related to this. Following are the parse errors related
+   with these, in the order of DECREASING magnitude :
+
+
+    a. If the opening bracket character '(' comes after a word without a
+       whitespace then, lexer ignores it. But the corresponding closing bracket
+       ')' is detected. Since the only grammar production corresponding to BRA
+       and KET is **compound_term ::= BRA expr KET.** , thus every BRA requires
+       KET and every KET requires a BRA.
+
+       Example Queries::
+
+           ip_masq_new(proto=TCP)
+           Server.CreateObject("ADODB.connection")
+           delphi CreateOleObject("MSXML2.DomDocument")
+           session_set_cookie_params(echo "hoi")
+           laatsteIndex(int n)
+           KT4V(MS-6712)
+           Chr(10) wat is code van " teken
+           data error(cyclic redundancy check)
+           libc.so.6(GLIBC_2.3)
+           Javascript:history.go(-1)
+           perl(find.pl)
+           lcase("string")
+           Titan TTC-D5TB(4/CU35)
+           date("w")
+           mysql_fetch_row(): supplied argument is not a valid MySQL result
+           resource
+           php date() nedelands
+           isEmpty( ) functie in visual basic
+           mkdir() failed (File exists) php
+           setProperty("McSquare"+i, _xscale, _xscale++);
+           getenv("HTTP_REFERER")
+           system(play ringin.wav); ?>
+           localtime(time(NULL))
+           .... and more.
+
+       In the above cases a thing to note is that this will happen in almost
+       all the "function calls" given as the search terms. And there seems
+       to be quite a lot of searches for function calls.
+
+
+    b. If the characters '(' or ')' are used to represent emoticon or
+       emoticon like objects, then also it leads to parse errors since the
+       grammar production **compound_term ::= BRA expr KET.** is not
+       satisfied. This situation can be really common if the data like
+       Twitter feeds or Facebook status or anything similar to this is used.
+
+       Example Queries::
+
+           Het wordt pas echt leuk als het hard staat!! >:)
+           On Friday 04 April 2003 09:32, Edwin van Eersel wrote: > ik voel
+           me eigenlijk wel behoorlijk kut :)
+           java :) als icon
+           php ;) in een array zetten
+           mag mijn waarschuwing nu weg ? ;)
+           linux humor :)
+
+
+    c. If there is a BRA or a KET and not both. (different from case 1.a as
+       there, both were present but the token BRA was neglected as it just
+       followed the word, without a whitespace). Thus this case corresponds
+       to the unmatched brackets.
+
+       Example Queries::
+
+           patch linux exploit -p)
+           VXD NAVEX()@)
+           asp 0x80040E14)
+           en-US; rv:1.3b) Gecko/20030210
+
+
+    d. If the opening and closing brackets (BRA and KET), have only characters
+       in between them, then those characters are ignored. Thus tokens
+       recieved by parser are BRA and then KET without any other token in
+       between and this leads to parser error. But note that if we have a
+       query like "xapian () google", neither the token BRA nor the token
+       KET is produced (since nothing between them, thus both are ignored
+       by the lexer).
+
+       Example Queries::
+
+           for %f in (*.*) do
+           mysql count(*)
+           COUNT(*)
+           preg_replace (.*?)
+           automatisch op All Flis (*.*)
+           (./) chmod.sh
+
+
+    e. There was also a single case where the opening bracket character '('
+       comes just after some other character (non-word character), then also
+       the problem rises. The one single query correspoding to this was -
+       "``Unable to find libgd.(a|so) anywhere``" Here the lexer doesn't passes
+       any BRA token to parser since the character '.' comes before it. But
+       the token KET is passed, thus leading to error since there is no BRA
+       corresponding to this KET.
+
+
+
+
+2. Another kind of parse errors were related to QUOTEs, ' `"` '. Following are
+   the parse errors related with Quotes.
+
+    a. Empty Quotes "" and Quotes with only characters (Non-word characters)
+       between them also lead to quite a lot of errors. If there are only
+       character(s) (Non-word character) between the quotes, then those
+       characters are neglected, leading to parse error since the only
+       grammar productions related to quotes is **compound_term ::= QUOTE
+       phrase QUOTE.** , where phrase can't be null.
+
+       Example Queries::
+
+           "'" +asp
+           ereg_replace("\\","\/"
+           href="#"
+           "../" path
+           "=" tekens uit csvfile
+           [php] ereg_replace("."
+           "+" en "-"
+           dvd "+" "-"
+           formule excel #naam"?"
+           "[......"
+           "~" + "c:\"
+           raar "~" bestand
+           ~ Could not retrieve directory listing for "/"
+           waarom "~" in directorynaam
+
+
+    b. If there is an opening Quote but no corresponding closing quote, then
+       that also lead to parse error. Thus this case corresponds to unmatches
+       quotes, similar to the error of unmatched brackets of 1.c. There were
+       about three queries with such error.
+
+       Example Queries::
+
+           search form asp "%'
+           vervangen # "/
+           ASP "request.form" van \"enctype="MULTIPART/FORM-DATA"\"
+
+
+
+3. Another kind of parse errors were related to the tokens LOVE and HATE. There
+   must be at least a term after the token LOVE or HATE, since the corresponding
+   grammar productions are **prob ::= LOVE term.** and **prob ::= stop_prob
+   LOVE term.** and similar rules for the token HATE. Thus if there is nothing
+   after these tokens or if there are just character(s) (Non-word character),
+   then that also lead to parse error (since non-word characters are simply
+   ignored by the lexer).
+
+   Example Queries::
+
+       +session +[
+       +=
+       php +=
+       relais +/-
+       dvd +/-
+       T68i truc ->
+       T68i ->
+       ->
+
+   Also, here the character '+' or '-' are not actually used for representing
+   LOVE or HATE, but the lexer identifies it as LOVE or HATE token only.
+
+
+4. There were some three - four queries which generated parse error because
+   of NEAR operator. The reason for that is that according to the grammar
+   rules - **near_expr ::= TERM NEAR TERM.** and **near_expr ::= near_expr
+   NEAR TERM.**, on the both sides of NEAR operator, there can only be TERM
+   and nothing else.
+
+   Example Queries::
+
+       kraan NEAR (Elektrisch OR Electrisch)
+       NEAR 207 46 249 27
+       NEAR 12V voeding
+
+
+5. If we have a HATE query between the brackets then it leads to parse error
+   but if we have the LOVE query between the brackets then it doesn't ! For
+   example, the query ``(+xapian)`` parses without giving error but the query
+   ``(-xapian)`` does not get parsed and gives error.
+   The reason here is that we can't just hate terms. There needs to be at least
+   one term which is not being hated.
+
+
+   Example Queries::
+
+       remote_smtp defer (-44)
+       er is een gereserveerde fout (-1104) opgetreden
+       sql server install fails error code (-1)
+
+   Also, here the character '-' is not actually used for representing HATE,
+   but the lexer identifies it as HATE token only.
+
+
+_`queryparser.cc`
+<http://xapian.org/docs/sourcedoc/html/queryparser_8cc_source.html>
+
+_`queryparsertest.cc`
+<http://xapian.org/docs/sourcedoc/html/queryparsertest_8cc_source.html>
+
+
