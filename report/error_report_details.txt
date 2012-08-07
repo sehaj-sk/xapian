@@ -1,0 +1,2160 @@
+This file contains all the queries from the real-world queries present in
+queryparsertest.cc which gave error while disabling the re-parse with no
+flags code., in order of their appearance in queryparsertest.cc.
+
+With each query, following things are mentioned :
+
+    a.  Query object returned when parsed with no flags.
+    b.  The tokens produced by parsing the query with no flags
+    c.  The tokens produced by parsing the query with flags
+    d.  The reason of parse error for the particular query.
+
+
+1.
+Query: mysql_fetch_row(): supplied argument is not a valid MySQL result resource
+
+Query object returned by parsing without flags : Query((mysql_fetch_row@1 OR (Zsuppli@2 OR Zargument@3 OR Zis@4 OR Znot@5
+                                                 OR Za@6 OR Zvalid@7 OR mysql@8 OR Zresult@9 OR Zresourc@10)))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("mysql_fetch_row"), TERM("supplied"), GROUP_TERM("argument"), GROUP_TERM("is"), GROUP_TERM("not"),
+                GROUP_TERM("a"), GROUP_TERM("valid"), GROUP_TERM("mysql"), GROUP_TERM("result"), GROUP_TERM("resource")
+
+With Flags : TERM("mysql_fetch_row"), KET
+
+Reason For Parse Error : Since the character "(" is just next to mysql_fetch_row, it is ignored. Now ")" is detected as the token
+                         KET and according to grammar there must be BRA before KET since the only grammar production
+                         associated with it is compound_term ::= BRA expr KET.
+
+
+
+
+2.
+Query: php date() nedelands
+
+Query object returned by parsing without flags : Query(((Zphp@1 OR date@2) OR Znedeland@3))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("php"), GROUP_TERM("date"), TERM("nedelands")
+
+With Flags : TERM("php"), GROUP_TERM("date"), KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+
+3.
+Query: date("w")
+
+Query object returned by parsing without flags : Query((date@1 OR w@2))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("date"), GROUP_TERM("w")
+
+With Flags : TERM("date"), QUOTE, TERM("w"), QUOTE, KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+4.
+Query: Syntaxisfout (operator ontbreekt ASP
+
+Query object returned by parsing without flags : Query((syntaxisfout@1 OR (Zoper@2 OR Zontbreekt@3 OR asp@4)))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("php"), GROUP_TERM("date"), TERM("nedelands")
+
+With Flags : TERM("syntaxisfout"), BRA, TERM("operator"), GROUP_TERM("ontbreekt"), GROUP_TERM("ASP")
+
+Reason For Parse Error : Opposite to that of the above reasons. Here after the token BRA the token KET is required since
+                         the only production associated with BRA is compound_term ::= BRA expr KET.
+
+
+
+
+5.
+Query: ASP "request.form" van \"enctype="MULTIPART/FORM-DATA"\"
+
+Query object returned by parsing without flags : Query(((((asp@1 OR (request@2 PHRASE 2 form@3)) OR Zvan@4) OR enctype@5)
+                                                 OR (multipart@6 PHRASE 3 form@7 PHRASE 3 data@8)))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("asp"), TERM("request"), PHR_TERM("form"), TERM("van"), TERM("enctype"), TERM("multipart"),
+                PHR_TERM("form"), PHR_TERM("data")
+
+With Flags : TERM("asp"), QUOTE, TERM("request"), TERM("form"), QUOTE, TERM("van"), QUOTE, TERM("enctype"), QUOTE,
+
+                TERM("multipart"), PHR_TERM("form"), PHR_TERM("data"), QUOTE, QUOTE
+
+Reason For Parse Error : The problem is of nested quotes. Here the second '"' is treated as the closing quotes of the fist
+                         quote and not as the beginning of the second quote.
+                         Then in the last we find two quotes which are actually the endings of the two earlier quotes,
+                         but the parser doesn't know this.
+                         Since the production regarding the quotes is compound_term ::= QUOTE phrase QUOTE., and phrase
+                         cannot be null, thus the parser generates error.
+
+
+
+
+6.
+Query: ip_masq_new(proto=TCP)
+
+Query object returned by parsing without flags : Query(((ip_masq_new@1 OR proto@2) OR tcp@3))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("ip_masq_new"), TERM("proto"), TERM("tcp")
+
+With Flags : TERM("ip_masq_new"), TERM("proto"), TERM("tcp"), KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+7.
+Query: $structure = imap_header($mbox, $tt);
+
+Query object returned by parsing without flags : Query((((Zstructur@1 OR imap_header@2) OR Zmbox@3) OR Ztt@4))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("structure"), TERM("imap_header"), TERM("mbox"), TERM("tt")
+
+With Flags : TERM("structure"), TERM("imap_header"), TERM("mbox"), TERM("tt"), KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+8.
+Query: ereg_replace("\\","\/"
+
+Query object returned by parsing without flags : Query(ereg_replace@1)
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("ereg_replace")
+
+With Flags : TERM("ereg_replace"), QUOTE, QUOTE
+
+Reason For Parse Error : There must be something between the quotes, since the only grammar production associated with
+                         quotes is compound_term ::= QUOTE phrase QUOTE. where phrase cannot be null.
+                         Characters are ignored. So if there are only characters, then that lead to parse error.
+
+
+
+
+
+9.
+Query: lcase("string")
+
+Query object returned by parsing without flags : Query((lcase@1 OR string@2))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("lcase"), TERM("string")
+
+With Flags : TERM("lcase"), QUOTE, TERM("string"), QUOTE, KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+10.
+Query: isEmpty( ) functie in visual basic
+
+Query object returned by parsing without flags : Query((lcase@1 OR string@2))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("isempty"), TERM("functie"), GROUP_TERM("in"), GROUP_TERM("visual"), GROUP_TERM("basic")
+
+With Flags : TERM("isempty"), KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+11.
+Query: Server.CreateObject("ADODB.connection")
+
+Query object returned by parsing without flags : Query(((server@1 PHRASE 2 createobject@2) OR (adodb@3 PHRASE 2 connection@4)))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("server"), PHR_TERM("createobject"), TERM("adodb"), PHR_TERM("connection")
+
+With Flags : TERM("server"), PHER_TERM("createobject"), QUOTE, TERM("adodb"), TERM("connection"), QUOTE, KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+
+
+12.
+Query: delphi CreateOleObject("MSXML2.DomDocument")
+
+Query object returned by parsing without flags : Query(((Zdelphi@1 OR createoleobject@2) OR (msxml2@3 PHRASE 2 domdocument@4)))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("delphi"), GROUP_TERM("createoleobject"), TERM("msxml2"), PHR_TERM("domdocument")
+
+With Flags : TERM("delphi"), GROUP_TERM("createoleobject"), QUOTE, TERM("msxml2"), TERM("domdocument"), QUOTE, KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+
+13.
+Query: session_set_cookie_params(echo "hoi")
+
+Query object returned by parsing without flags : Query(((session_set_cookie_params@1 OR Zecho@2) OR hoi@3))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("session_set_cookie_params"), TERM("echo"), TERM("hoi")
+
+With Flags : TERM("session_set_cookie_params"), TERM("echo"), QUOTE, TERM("hoi"), QUOTE, KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+
+14.
+Query: windows update werkt niet (windows se
+
+Query object returned by parsing without flags : Query(((Zwindow@1 OR Zupdat@2 OR Zwerkt@3 OR Zniet@4) OR (Zwindow@5 OR Zse@6)))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("windows"), GROUP_TERM("update"), GROUP_TERM("werkt"), GROUP_TERM("niet"), TERM("windows"), GROUP_TERM("se")
+
+With Flags :    TERM("windows"), GROUP_TERM("update"), GROUP_TERM("werkt"), GROUP_TERM("niet"), BRA, TERM("windows"),
+                GROUP_TERM("se")
+
+Reason For Parse Error : Same as 1. But here there os only BRA and no corresponding KET associated with it.
+
+
+
+
+
+15.
+Query: header("content-type: application/octet-stream");
+
+Query object returned by parsing without flags : Query(((header@1 OR (content@2 PHRASE 2 type@3)) OR (application@4 PHRASE
+                                                 3 octet@5 PHRASE 3 stream@6)))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("header"), TERM("content"), PHR_TERM("type"), TERM("application"), PHR_TERM("octet"), PHR_TERM("stream")
+
+With Flags : TERM("header"), QUOTE, TERM("content"), TERM("type"), TERM("application"), TERM("octet"), TERM("stream"), QUOTE, KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+
+16.
+Query: $datum = date("d-m-Y");
+
+Query object returned by parsing without flags : Query(((Zdatum@1 OR date@2) OR (d@3 PHRASE 3 m@4 PHRASE 3 y@5)))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("datum"), TERM("date"), TERM("d"), PHR_TERM("m"), PHR_TERM("y")
+
+With Flags : TERM("datum"), TERM("date"), QUOTE, TERM("d"), TERM("m"), TERM("y"), QUOTE, KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+
+17.
+Query: $datum = "'" +asp
+
+Query object returned by parsing without flags : Query(Zasp@1)
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("asp")
+
+With Flags : QUOTE, QUOTE
+
+Reason For Parse Error : There has to be something between the quotes.
+
+
+
+
+18.
+Query: $datum = +session +[
+
+Query object returned by parsing without flags : Query(Zsession@1)
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("session")
+
+With Flags : LOVE, TERM("session"), LOVE
+
+Reason For Parse Error : Accroding to the grammar there has to be some term after the token LOVE. And thus just a character
+                         after the token LOVE is ignored and leads to the error.
+
+
+
+19.
+Query: $datum = mkdir() failed (File exists) php
+Query object returned by parsing without flags : Query((((mkdir@1 OR Zfail@2) OR (file@3 OR Zexist@4)) OR Zphp@5))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("mkdir"), TERM("failed"), TERM("file"), GROUP_TERM("exists"), TERM("php")
+
+With Flags : TERM("mkdir"), KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+
+
+20.
+Query: laatsteIndex(int n)
+
+Query object returned by parsing without flags : Query((laatsteindex@1 OR (Zint@2 OR Zn@3)))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("laatsteindex"), TERM("int"), GROUP_TERM("n")
+
+With Flags : TERM("laatsteindex"), TERM("int"), GROUP_TERM("n"), KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+
+21.
+Query: href="#"
+
+Query object returned by parsing without flags : Query(href@1)
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("href")
+
+With Flags : TERM("href"), QUOTE, QUOTE
+
+Reason For Parse Error : Deteceted earlier as well. Quotes can't be empty. The character is negelected.
+
+
+
+
+22.
+Query: Request.ServerVariables("REMOTE_USER") javascript
+
+Query object returned by parsing without flags : Query((((request@1 PHRASE 2 servervariables@2) OR remote_user@3) OR
+                                                 Zjavascript@4))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("request"), PHR_TERM("servervariables"), TERM("remote_user"), TERM("javascript")
+
+With Flags : TERM("header"), PHR_TERM("servervariables"), QUOTE, TERM("remote_user"), QUOTE, KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+23.
+Query: XF86Config(-4) waar
+
+Query object returned by parsing without flags : Query(((xf86config@1 OR 4@2) OR Zwaar@3))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("xf86config"), TERM("4"), TERM("waar")
+
+With Flags : TERM("xf86config"), HATE, TERM("4"), KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+
+24.
+Query: KT4V(MS-6712)
+
+Query object returned by parsing without flags : Query((kt4v@1 OR (ms@2 PHRASE 2 6712@3)))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("kt4v"), TERM("ms"), PHR_TERM("6712")
+
+With Flags : TERM("kt4v"), TERM("ms"), PHR_TERM("6712"), KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+
+25.
+Query: 137(netbios-ns)
+
+Query object returned by parsing without flags : Query((137@1 OR (netbios@2 PHRASE 2 ns@3)))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("137"), TERM("netbios"), PHR_TERM("ns")
+
+With Flags : TERM("137"), TERM("netbios"), PHR_TERM("ns"), KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+
+
+26.
+Query: Chr(10) wat is code van " teken
+
+Query object returned by parsing without flags : Query((((chr@1 OR 10@2) OR (Zwat@3 OR Zis@4 OR Zcode@5 OR Zvan@6)) OR Zteken@7))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("chr"), TERM("10"), TERM("wat"), GROUP_TERM("is"), GROUP_TERM("code"), GROUP_TERM("van"), TERM("teken")
+
+With Flags : TERM("chr"), TERM("10"), KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+
+27.
+Query: The Jet VBA file (VBAJET.dll for 16-bit version, VBAJET32.dll version
+
+Query object returned by parsing without flags : Query((((((((the@1 OR jet@2 OR vba@3 OR Zfile@4) OR (vbajet@5 PHRASE 2
+                                                 dll@6)) OR Zfor@7) OR (16@8 PHRASE 2 bit@9)) OR Zversion@10) OR 
+                                                 (vbajet32@11 PHRASE 2 dll@12)) OR Zversion@13))
+
+Tokens Formed By The Lexer :
+
+Without Flags :  TERM("the"), GROUP_TERM("jet"), GROUP_TERM("vba"), GROUP_TERM("file"), TERM("vbajet"), PHR_TERM("dll"),
+                 TERM("for"), TERM("16"), PHR_TERM("bit"), TERM("version"), TERM("vbajet32"), PHR_TERM("dll"), TERM("version")
+
+With Flags :     TERM("the"), GROUP_TERM("jet"), GROUP_TERM("vba"), GROUP_TERM("file"), BRA, TERM("vbajet"), PHR_TERM("dll"),
+                 TERM("for"), TERM("16"), PHR_TERM("bit"), TERM("version"), TERM("vbajet32"), PHR_TERM("dll"), TERM("version")
+
+Reason For Parse Error : No KET corresponding to BRA. Detected this above as well.
+
+
+
+
+
+28.
+Query: setcookie("naam","$user");
+
+Query object returned by parsing without flags : Query(((setcookie@1 OR naam@2) OR user@3))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("setcookie"), TERM("naam"), TERM("user")
+
+With Flags : TERM("setcookie"), QUOTE, TERM("naam"), QUOTE, QUOTE, TERM("user"), QUOTE, KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+29.
+Query: if ($HTTP
+
+Query object returned by parsing without flags : Query((Zif@1 OR http@2))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("if"), TERM("http")
+
+With Flags : TERM("if"), BRA, TERM("http")
+
+Reason For Parse Error : No KET corresponding to BRA.
+
+
+
+
+
+30.
+Query: data error(cyclic redundancy check)
+
+Query object returned by parsing without flags : Query(((Zdata@1 OR error@2) OR (Zcyclic@3 OR Zredund@4 OR Zcheck@5)))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("data"), GROUP_TERM("error"), TERM("cyclic"), GROUP_TERM("redundancy"), GROUP_TERM("check")
+
+With Flags : TERM("data"), GROUP_TERM("error"), TERM("cyclic"), GROUP_TERM("redundancy"), GROUP_TERM("check"), KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+
+31.
+Query: "../" path
+
+Query object returned by parsing without flags : Query(Zpath@1)
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("path")
+
+With Flags : QUOTE, QUOTE
+
+Reason For Parse Error : Quote can't be empty. Only Characters inside quotes are ignored.
+
+
+
+
+
+32.
+Query: Unable to find libgd.(a|so) anywhere
+
+Query object returned by parsing without flags : Query(((((unable@1 OR Zto@2 OR Zfind@3 OR Zlibgd@4) OR Za@5) OR Zso@6)
+                                                 OR Zanywher@7))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("unable"), GROUP_TERM("to"), GROUP_TERM("find"), GROUP_TERM("libgd"), TERM("a"), TERM("so"),
+                TERM("anywhere")
+
+With Flags :    TERM("unable"), GROUP_TERM("to"), GROUP_TERM("find"), GROUP_TERM("libgd"), TERM("a"), TERM("so"), KET
+
+Reason For Parse Error : Same as 1. A new point to note is that even if BRA is followed by other character rather than the
+                         word itself, then also it gets neglected !
+
+
+
+
+33.
+Query: "=" tekens uit csvfile
+
+Query object returned by parsing without flags : Query((Zteken@1 OR Zuit@2 OR Zcsvfile@3))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("tekens"), GROUP_TERM("uit"), GROUP_TERM("csvfile")
+
+With Flags : QUOTE QUOTE
+
+Reason For Parse Error : Quotes can't be empty.
+
+
+34.
+Query: "=" tekens uit csvfile
+
+Query object returned by parsing without flags : Query((Zteken@1 OR Zuit@2 OR Zcsvfile@3))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("tekens"), GROUP_TERM("uit"), GROUP_TERM("csvfile")
+
+With Flags : QUOTE QUOTE
+
+Reason For Parse Error : Quotes can't be empty.
+
+
+
+
+35.
+Query: libc.so.6(GLIBC_2.3)
+
+Query object returned by parsing without flags : Query(((libc@1 PHRASE 3 so@2 PHRASE 3 6@3) OR glibc_2.3@4))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("libc"), PHR_TERM("so"), PHR_TERM("6"), TERM("glibc_2.3")
+
+With Flags : TERM("libc"), PHR_TERM("so"), PHR_TERM("6"), TERM("glibc_2.3") KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+36.
+Query: patch linux exploit -p)
+
+Query object returned by parsing without flags : Query(((Zpatch@1 OR Zlinux@2 OR Zexploit@3) OR Zp@4))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("patch"), GROUP_TERM("linux"), GROUP_TERM("exploit"), TERM("p")
+
+With Flags : TERM("patch"), GROUP_TERM("linux"), GROUP_TERM("exploit"), HATE, TERM("p"), KET
+
+Reason For Parse Error : Same as 1. But here different that only KET can also lead to this case. Thatis it is not necessary
+                         that the corresponding BRA token is there and is being neglected.
+
+
+
+
+37.
+Query: ob_start("ob_gzhandler"); file download
+
+Query object returned by parsing without flags : Query(((ob_start@1 OR ob_gzhandler@2) OR (Zfile@3 OR Zdownload@4)))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("ob_start"), TERM("ob_gzhandler"), TERM("file"), GROUP_TERM("download")
+
+With Flags : TERM("ob_start"), QUOTE, TERM("ob_gzhandler"), QUOTE, KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+38.
+Query: Javascript:history.go(-1)
+
+Query object returned by parsing without flags : Query(((javascript@1 PHRASE 3 history@2 PHRASE 3 go@3) OR 1@4))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("javascript"), PHR_TERM("history"), PHR_TERM("go"), TERM("1")
+
+With Flags : TERM("javascript"), PHR_TERM("history"), PHR_TERM("go"), HATE, TERM("1"), KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+39.
+Query: java :) als icon
+
+Query object returned by parsing without flags : Query((Zjava@1 OR (Zal@2 OR Zicon@3)))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("java"), TERM("als"), GROUP_TERM("icon")
+
+With Flags : TERM("java"), KET
+
+Reason For Parse Error : Same as 1. But here difference as in some earlier cases as well that it is not necessary that
+                         corresponding BRA is present. Also here the difference is that all the emoticons would lead to
+                         parser error. So with data like Twitter tweets, it shall be a problem, since this would result in
+                         a lot of time.
+
+
+40.
+Query: setProperty("McSquare"+i, _xscale, _xscale++);
+
+Query object returned by parsing without flags : Query(((((setproperty@1 OR mcsquare@2) OR Zi@3) OR _xscale@4) OR _xscale++@5))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("setproperty"), TERM("mcsquare"), TERM("i"), TERM("_xscale"), TERM("_xscale++")
+
+With Flags : TERM("setproperty"), QUOTE, TERM("mcsquare"), QUOTE, TERM("i"), TERM("_xscale"), TERM("_xscale++"), KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+41.
+Query: VXD NAVEX()@)
+
+Query object returned by parsing without flags : Query((vxd@1 OR navex@2))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("vxd"), GROUP_TERM("navex")
+
+With Flags : TERM("vxd"), GROUP_TERM("navex"), KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+42.
+Query: +=
+
+Query object returned by parsing without flags : Query()
+
+Tokens Formed By The Lexer :
+
+Without Flags :
+
+With Flags : LOVE
+
+Reason For Parse Error : There needs to be some term after LOVE. Also the characters as in other cases is neglected.
+
+
+
+43.
+Query: php +=
+
+Query object returned by parsing without flags : Query(Zphp@1)
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("php")
+
+With Flags : TERM("php"), LOVE
+
+Reason For Parse Error : Same as above.
+
+
+
+44.
+Query: [php] ereg_replace("."
+
+Query object returned by parsing without flags : Query((Zphp@1 OR ereg_replace@2))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("php"), TERM("ereg_replace")
+
+With Flags : TERM("php"), TERM("ereg_replace"), QUOTE, QUOTE
+
+Reason For Parse Error : Quote can't be empty. Characters neglected.
+
+
+
+
+45.
+Query: DVD brander "+" en "-"
+
+Query object returned by parsing without flags : Query(((dvd@1 OR Zbrander@2) OR Zen@3))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("dvd"), GROUP_TERM("brander"), TERM("en")
+
+With Flags : TERM("dvd"), GROUP_TERM("brander"), QUOTE, QUOTE
+
+Reason For Parse Error : Quote can't be empty. Characters neglected.s
+
+
+
+
+46.
+Query: asp 0x80040E14)
+
+Query object returned by parsing without flags : Query((Zasp@1 OR 0x80040e14@2))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("asp"), GROUP_TERM("0x80040E14")
+
+With Flags : TERM("asp"), GROUP_TERM("0x80040E14"), KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+47.
+Query: socket\(\)
+
+Query object returned by parsing without flags : Query(socket@1)
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("socket")
+
+With Flags : TERM("socket"), KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+48.
+Query: header("Content Type: text/html");
+
+Query object returned by parsing without flags : Query(((header@1 OR (content@2 OR type@3)) OR (text@4 PHRASE 2 html@5)))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("header"), TERM("content"), GROUP_TERM("type"), TERM("text"), PHR_TERM("html")
+
+With Flags : TERM("header"), QUOTE, TERM("content"), TERM("type"), TERM("text"), TERM("html"), QUOTE, KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+
+49.
+Query: Class.forName("jdbc.odbc.JdbcOdbcDriver");
+
+Query object returned by parsing without flags : Query(((class@1 PHRASE 2 forname@2) OR (jdbc@3 PHRASE 3 odbc@4 PHRASE
+                                                 3 jdbcodbcdriver@5)))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("class"), PHR_TERM("forname"), TERM("jdbc"), PHR_TERM("odbc"), PHR_TERM("jdbcodbcdriver")
+
+With Flags : TERM("class"), PHR_TERM("forname"), QUOTE, TERM("jdbc"), TERM("odbc"), TERM("jdbcodbcdriver"), QUOTE, KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+50.
+Query: perl(find.pl)
+
+Query object returned by parsing without flags : Query((perl@1 OR (find@2 PHRASE 2 pl@3)))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("perl"), TERM("find"), PHR_TERM("pl")
+
+With Flags : TERM("perl"), TERM("find"), PHR_TERM("pl"), KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+
+51.
+Query: On Friday 04 April 2003 09:32, Edwin van Eersel wrote: > ik voel me eigenlijk wel behoorlijk kut :)
+
+Query object returned by parsing without flags : Query(((((on@1 OR friday@2 OR 04@3 OR april@4 OR 2003@5) OR (09@6 PHRASE
+                                                 2 32@7)) OR (edwin@8 OR Zvan@9 OR eersel@10 OR Zwrote@11)) OR (Zik@12 OR
+                                                 Zvoel@13 OR Zme@14 OR Zeigenlijk@15 OR Zwel@16 OR Zbehoorlijk@17 OR Zkut@18)))
+
+Tokens Formed By The Lexer :
+
+Without Flags : a lot, not writing.
+
+With Flags : same as above with KET in the end
+
+Reason For Parse Error : Same as 1. Also emoticons.
+
+
+
+
+52.
+Query: Shortcuts in menu (java
+
+Query object returned by parsing without flags : Query(((shortcuts@1 OR Zin@2 OR Zmenu@3) OR Zjava@4))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("shortcuts"), GROUP_TERM("in"), GROUP_TERM("menu"), TERM("java")
+
+With Flags : TERM("shortcuts"), GROUP_TERM("in"), GROUP_TERM("menu"), BRA, TERM("java")
+
+Reason For Parse Error : No KET corresponding to BRA.
+
+
+
+
+53.
+Query: for (;;) c++
+
+Query object returned by parsing without flags : Query((Zfor@1 OR Zc++@2))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("for"), TERM("c++")
+
+With Flags : TERM("for"), BRA, KET
+
+Reason For Parse Error : Nothing inside BRA and KET. Here a thing to note is that if we have a query like "xapian () google",
+                         neither the token BRA nor the token KET is produced.
+                         But in this case, both these tokens are produced since there are characters in between them.
+
+
+
+54.
+Query: NEC DV-5800B (Bul
+
+Query object returned by parsing without flags : Query(((nec@1 OR (dv@2 PHRASE 2 5800b@3)) OR bul@4))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("nec"), TERM("dv"), PHR_TERM("5800b"), TERM("bull")
+
+With Flags : TERM("nec"), TERM("dv"), PHR_TERM("5800b"), BRA, TERM("bull")
+
+Reason For Parse Error : No KET corresponding to BRA
+
+
+
+
+55.
+Query: org.jdom.input.SAXBuilder.<init>(SAXBuilder.java)
+
+Query object returned by parsing without flags : Query((((org@1 PHRASE 4 jdom@2 PHRASE 4 input@3 PHRASE 4 saxbuilder@4)
+                                                 OR init@5) OR (saxbuilder@6 PHRASE 2 java@7)))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("org"), PHR_TERM("jdom"), PHR_TERM("input"), PHR_TERM("saxbuilder"), TERM("init"), TERM("saxbuilder"),
+                PHR_TERM("java")
+
+With Flags :    TERM("org"), PHR_TERM("jdom"), PHR_TERM("input"), PHR_TERM("saxbuilder"), TERM("init"), TERM("saxbuilder"),
+                PHR_TERM("java"), KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+56.
+Query: relais +/-
+
+Query object returned by parsing without flags : Query(Zrelai@1)
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("relais")
+
+With Flags : TERM("relais"), LOVE
+
+Reason For Parse Error : There must be a term after LOVE. Also such cases represent the ineffectivity of handling + and -
+                         which may wery often appear, not meaning LOVE or HATE.
+
+
+
+
+57.
+Query: search form asp "%'
+
+Query object returned by parsing without flags : Query((Zsearch@1 OR Zform@2 OR Zasp@3))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("search"), GROUP_TERM("form"), GROUP_TERM("asp")
+
+With Flags : TERM("search"), GROUP_TERM("form"), GROUP_TERM("asp") QUOTE
+
+Reason For Parse Error : There must be a closing quote for every opening quote.
+
+
+
+
+58.
+Query: Het wordt pas echt leuk als het hard staat!! >:)
+
+Query object returned by parsing without flags : Query((het@1 OR Zwordt@2 OR Zpas@3 OR Zecht@4 OR Zleuk@5 OR Zal@6 OR Zhet@7
+                                                 OR Zhard@8 OR Zstaat@9))
+
+Tokens Formed By The Lexer :
+
+Without Flags : simple TERM and GROUP_TERM token, a lot of them, not writing
+
+With Flags : Samw as above with the token KET afterwards
+
+Reason For Parse Error : Same as 1. As pointed before also, emoticons may lead to lot of such parse errors.
+
+
+
+59.
+Query: Titan TTC-D5TB(4/CU35)
+
+Query object returned by parsing without flags : Query(((titan@1 OR (ttc@2 PHRASE 2 d5tb@3)) OR (4@4 PHRASE 2 cu35@5)))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("titan"), TERM("ttc"), PHR_TERM("d5tb"), TERM("4"), PHR_TERM("cu35")
+
+With Flags : TERM("titan"), TERM("ttc"), PHR_TERM("d5tb"), TERM("4"), PHR_TERM("cu35"), KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+60.
+Query: Warning: stat failed for fotos(errno=2 - No such file or directory)
+
+Query object returned by parsing without flags : Query(((((warning@1 OR (Zstat@2 OR Zfail@3 OR Zfor@4 OR fotos@5)) OR errno@6)
+                                                 OR 2@7) OR (no@8 OR Zsuch@9 OR Zfile@10 OR Zor@11 OR Zdirectori@12)))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("warning"), TERM("stat"), GROUP_TERM("failed"), GROUP_TERM("for"), GROUP_TERM("fotos"), TERM("errno"),
+                   TERM("2"), TERM("no"), GROUP_TERM("such"), GROUP_TERM("file"), GROUP_TERM("or"), GROUP_TERM("directory")
+
+With Flags : TERM("warning"), TERM("stat"), GROUP_TERM("failed"), GROUP_TERM("for"), GROUP_TERM("fotos"), TERM("errno"),
+             TERM("2"), TERM("no"), GROUP_TERM("such"), GROUP_TERM("file"), GROUP_TERM("or"), GROUP_TERM("directory"), KET
+
+Reason For Parse Error : Same as 1
+
+
+
+
+61.
+Query: dvd +/-
+
+Query object returned by parsing without flags : Query(Zdvd@1)
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("dvd")
+
+With Flags : TERM("dvd"), LOVE
+
+Reason For Parse Error : There has to be some term after LOVE.
+
+
+
+
+62.
+Query: getenv("HTTP_REFERER")
+
+Query object returned by parsing without flags : Query((getenv@1 OR http_referer@2))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("getenv"), TERM("http_referer")
+
+With Flags : TERM("getenv"), QUOTE, TERM("http_referer"), QUOTE, KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+63.
+Query: header("Content-type:application/octetstream");
+
+Query object returned by parsing without flags : Query((header@1 OR (content@2 PHRASE 4 type@3 PHRASE 4 application@4 PHRASE
+                                                 4 octetstream@5)))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("header"), TERM("content"), PHR_TERM("type"), PHR_TERM("application"), PHR_TERM("octetstream")
+
+With Flags : TERM("header"), QUOTE, TERM("content"), TERM("type"), TERM("application"), TERM("octetstream"), QUOTE, KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+64.
+Query: (001.part.met
+
+Query object returned by parsing without flags : Query((001@1 PHRASE 3 part@2 PHRASE 3 met@3))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("001"), PHR_TERM("part"), PHR_TERM("met")
+
+With Flags : BRA, TERM("001"), PHR_TERM("part"), PHR_TERM("met")
+
+Reason For Parse Error : No KET corresponding to BRA.
+
+
+
+
+65.
+Query: Warning: mail(): Use the -f option (5th param) to include valid reply-to address ! in /usr/home/vdb/www/mail.php on
+       line 79
+
+Query object returned by parsing without flags : Query(((((((((((warning@1 OR mail@2) OR (use@3 OR Zthe@4)) OR (Zf@5 OR
+                                                 Zoption@6)) OR (5th@7 OR Zparam@8)) OR (Zto@9 OR Zinclud@10 OR Zvalid@11))
+                                                 OR (reply@12 PHRASE 2 to@13)) OR Zaddress@14)
+                                                 OR Zin@15) OR (usr@16 PHRASE 6 home@17 PHRASE 6 vdb@18 PHRASE 6 www@19
+                                                 PHRASE 6 mail@20 PHRASE 6 php@21)) OR (Zon@22 OR
+                                                 Zline@23 OR 79@24)))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("warning"), TERM("mail"), TERM("use"), GROUP_TERM("the"), TERM("f"), GROUP_TERM("option"), TERM("5th"),
+                GROUP_TERM("param"), TERM("to"), GROUP_TERM("include"), GROUP_TERM("valid"), TERM("reply"), PHR_TERM("to"),
+                TERM("address"), TERM("in"), TERM("usr"), PHR_TERM("home"), PHR_TERM("vdb"), PHR_TERM("www"),
+                PHR_TERM("mail"), PHR_TERM("php"), TERM("on"), GROUP_TERM("line"), GROUP_TERM("79"),
+
+With Flags : TERM("warning"), TERM("mail"), KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+66.
+Query: dvd "+" "-"
+
+Query object returned by parsing without flags : Query(Zdvd@1)
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("dvd")
+
+With Flags : TERM("dvd"), QUOTE, QUOTE
+
+Reason For Parse Error : Empty Quotes. Characters ignored.
+
+
+
+
+67.
+Query: bericht ( %)
+
+Query object returned by parsing without flags : Query(Zbericht@1)
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("bericht")
+
+With Flags : TERM("bericht"), BRA, KET
+
+Reason For Parse Error : Nothing between BRA and KET. Characters ignored.
+
+
+
+
+68.
+Query: GA-8IHXP(3.0)
+
+Query object returned by parsing without flags : Query(((ga@1 PHRASE 2 8ihxp@2) OR 3.0@3))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("ga"), PHR_TERM("8ihxp"), TERM("3.0")
+
+With Flags : TERM("ga"), PHR_TERM("8ihxp"), TERM("3.0"), KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+69.
+Query: 8IHXP(3.0)
+
+Query object returned by parsing without flags : Query((8ihxp@1 OR 3.0@2))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("8ihxp"), TERM("3.0")
+
+With Flags : TERM("8ihxp"), TERM("3.0"), KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+70.
+Query: kraan NEAR (Elektrisch OR Electrisch)
+
+Query object returned by parsing without flags : Query(((Zkraan@1 OR near@2) OR (elektrisch@3 OR or@4 OR electrisch@5)))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("kraan"), GROUP_TERM("near"), TERM("elektrisch"), GROUP_TERM("or"), GROUP_TERM("electrisch")
+
+With Flags : TERM("kraan"), NEAR, BRA
+
+Reason For Parse Error : NEAR expects that both the subterms adjacent to it must be TERMS, since the two corresponding
+                         grammar productions are near_expr ::= TERM NEAR TERM. and near_expr ::= near_expr NEAR TERM.
+
+
+
+
+71.
+Query: Movie.FileName=("../../../~animations/"+lesson1.recordset.fields('column3')+"Intro.avi")
+
+Query object returned by parsing without flags : Query((((((movie@1 PHRASE 2 filename@2) OR animations@3) OR (lesson1@4
+                                                 PHRASE 3 recordset@5 PHRASE 3 fields@6)) OR Zcolumn3@7) OR (intro@8 PHRASE
+                                                 2 avi@9)))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("movie"), PHR_TERM("filename"), TERM("animations"), TERM("lesson1"), PHR_TERM("recordset"),
+                PHR_TERM("fields"), TERM("column3"), TERM("intro"), PHR_TERM("avi")
+
+With Flags :    TERM("movie"), PHR_TERM("filename"), QUOTE, TERM("animations"), QUOTE, TERM("lesson1"), PHR_TERM("recordset"),
+                PHR_TERM("fields"), TERM("column3"), KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+72.
+Query: system(play ringin.wav); ?>
+
+Query object returned by parsing without flags : Query(((system@1 OR Zplay@2) OR (ringin@3 PHRASE 2 wav@4)))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("system"), TERM("play"), TERM("ringin"), PHR_TERM("wav")
+
+With Flags : TERM("system"), TERM("play"), TERM("ringin"), PHR_TERM("wav"), KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+73.
+Query: LoadLibrary("mainta/gamex86.dll") failed
+
+Query object returned by parsing without flags : Query(((loadlibrary@1 OR (mainta@2 PHRASE 3 gamex86@3 PHRASE 3 dll@4))
+OR Zfail@5))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("loadlibrary"), TERM("mainta"), PHR_TERM("gamex86"), PHR_TERM("dll"), TERM("failed")
+
+With Flags : TERM("loadlibrary"), QUOTE, TERM("mainta"), TERM("gamex86"), TERM("dll"), QUOTE, KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+74.
+Query: DATE_FORMAT('1997-10-04 22:23:00', '%W %M %Y');
+
+Query object returned by parsing without flags : Query((((((date_format@1 OR (1997@2 PHRASE 3 10@3 PHRASE 3 04@4)) OR
+                                                 (22@5 PHRASE 3 23@6 PHRASE 3 00@7)) OR w@8) OR m@9) OR y@10))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("date_format"), TERM("1997"), PHR_TERM("10"), PHR_TERM("04"), TERM("22"), PHR_TERM("23"), PHR_TERM("00"),
+                TERM("w"), TERM("m"), TERM("y"),
+
+With Flags :    TERM("date_format"), TERM("1997"), PHR_TERM("10"), PHR_TERM("04"), TERM("22"), PHR_TERM("23"), PHR_TERM("00"),
+                TERM("w"), TERM("m"), TERM("y"), KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+75.
+Query: COUNT(*)
+
+Query object returned by parsing without flags : Query(count@1)
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("count")
+
+With Flags : TERM("count"), KET
+
+Reason For Parse Error : Same as 1. Note that only characters inside the opening and closing brackets leads to parse errors.
+
+
+
+
+76.
+Query: if(usercode==passcode==)
+
+Query object returned by parsing without flags : Query(((if@1 OR usercode@2) OR passcode@3))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("if"), TERM("usercode"), TERM("passcode")
+
+With Flags : TERM("if"), TERM("usercode"), TERM("passcode"), KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+77.
+Query: php ;) in een array zetten
+
+Query object returned by parsing without flags : Query((Zphp@1 OR (Zin@2 OR Zeen@3 OR Zarray@4 OR Zzetten@5)))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("php"), TERM("in"), GROUP_TERM("een"), GROUP_TERM("array"), GROUP_TERM("zetten"),
+
+With Flags : TERM("php"), KET
+
+Reason For Parse Error : Same as 1. Also, emoticons.
+
+
+
+
+78.
+Query: De inhoud van uw advertentie is niet geschikt voor plaatsing op marktplaats! (001
+
+Query object returned by parsing without flags : Query(((de@1 OR Zinhoud@2 OR Zvan@3 OR Zuw@4
+                                                 OR Zadvertenti@5 OR Zis@6 OR
+                                                 Zniet@7 OR Zgeschikt@8 OR Zvoor@9 OR Zplaats@10
+                                                 OR Zop@11 OR Zmarktplaat@12) OR 001@13))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("de"), GROUP_TERM("inhoud"), GROUP_TERM("van"), GROUP_TERM("uw"), GROUP_TERM("advertentie"),
+                GROUP_TERM("is"), GROUP_TERM("niet"), GROUP_TERM("geschikt"), GROUP_TERM("voor"),
+                GROUP_TERM("plaatsing"), GROUP_TERM("op"), GROUP_TERM("marktplaats"), TERM("001")
+
+With Flags : TERM("de"), GROUP_TERM("inhoud"), GROUP_TERM("van"), GROUP_TERM("uw"), GROUP_TERM("advertentie"),
+             GROUP_TERM("is"), GROUP_TERM("niet"), GROUP_TERM("geschikt"), GROUP_TERM("voor"),
+             GROUP_TERM("plaatsing"), GROUP_TERM("op"), GROUP_TERM("marktplaats"), BRA, TERM("001")
+
+Reason For Parse Error : No KET corresponding to BRA.
+
+
+
+
+79.
+Query: Formateren lukt niet(98,XP)
+
+Query object returned by parsing without flags : Query((((formateren@1 OR Zlukt@2 OR niet@3) OR 98@4) OR xp@5)
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("formateren"), GROUP_TERM("lukt"), GROUP_TERM("niet"), TERM("98"), TERM("xp"),
+
+With Flags : TERM("formateren"), GROUP_TERM("lukt"), GROUP_TERM("niet"), TERM("98"), TERM("xp"), KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+80.
+Query: access denied (java.io.
+
+Query object returned by parsing without flags : Query(((Zaccess@1 OR Zdeni@2) OR (java@3 PHRASE 2 io@4)))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("access"), GROUP_TERM("denied"), TERM("java"), PHR_TERM("io")
+
+With Flags : TERM("access"), GROUP_TERM("denied"), BRA, TERM("java"), PHR_TERM("io")
+
+Reason For Parse Error : No KET corresponding to BRA.
+
+
+
+
+
+81.
+Query: (access denied (java.io.)
+
+Query object returned by parsing without flags : Query(((Zaccess@1 OR Zdeni@2) OR (java@3 PHRASE 2 io@4)))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("access"), GROUP_TERM("denied"), TERM("java"), PHR_TERM("io")
+
+With Flags : BRA, TERM("access"), GROUP_TERM("denied"), BRA, TERM("java"), PHR_TERM("io"), KET
+
+Reason For Parse Error : Same as above. No KET corresponding to BRA.
+
+
+
+
+82.
+Query: localtime(time(NULL));
+
+Query object returned by parsing without flags : Query(((localtime@1 OR time@2) OR null@3))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("localtime"), TERM("time"), TERM("null")
+
+With Flags : TERM("localtime"), TERM("time"), TERM("null"), KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+83.
+Query: T68i truc ->
+
+Query object returned by parsing without flags : Query((t68i@1 OR Ztruc@2))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("t68i"), GROUP_TERM("truc")
+
+With Flags : TERM("t68i"), GROUP_TERM("truc"), HATE
+
+Reason For Parse Error : There has to be some TERM after the token HATE.
+
+
+
+
+84.
+Query: T68i ->
+
+Query object returned by parsing without flags : Query(t68i@1)
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("t68i")
+
+With Flags : TERM("t68i"), HATE
+
+Reason For Parse Error : Same as above.
+
+
+
+
+85.
+Query: if (eregi("
+
+Query object returned by parsing without flags : Query((Zif@1 OR eregi@2))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("if"), TERM("eregi")
+
+With Flags : TERM("if"), BRA, TERM("eregi")
+
+Reason For Parse Error : No BRA corresponding to KET
+
+
+
+
+86.
+Query: execCommand("Paste");
+
+Query object returned by parsing without flags : Query((execcommand@1 OR paste@2))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("execcommand"), TERM("paste")
+
+With Flags : TERM("execcommand"), QUOTE, TERM("paste"), QUOTE, KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+87.
+Query: [showjekamer)
+
+Query object returned by parsing without flags : Query(Zshowjekam@1)
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("showjekamer"),
+
+With Flags : TERM("showjekamer"), KET,
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+88.
+Query:  The description for Event ID 1 in Source True Vector Engine ) cannot be found. The local computer may not have the
+        necessary registry information or message DLL files to display messages from a remote computer. You may be able to use
+        the /AUXSOURC
+
+Query object returned by parsing without flags : Query((((the@1 OR Zdescript@2 OR Zfor@3 OR event@4 OR id@5 OR 1@6 OR Zin@7 OR
+                                                 source@8 OR true@9 OR vector@10 OR engine@11) OR (Zcannot@12 OR Zbe@13 OR
+                                                 Zfound@14 OR the@15 OR Zlocal@16 OR Zcomput@17 OR
+                                                 Zmay@18 OR Znot@19 OR Zhave@20 OR Zthe@21 OR Znecessari@22 OR Zregistri@23
+                                                 OR Zinform@24 OR Zor@25 OR Zmessag@26 OR dll@27
+                                                 OR Zfile@28 OR Zto@29 OR Zdisplay@30 OR Zmessag@31 OR Zfrom@32 OR Za@33
+                                                 OR Zremot@34 OR Zcomput@35 OR you@36 OR Zmay@37 OR
+                                                 Zbe@38 OR Zabl@39 OR Zto@40 OR Zuse@41 OR Zthe@42)) OR auxsourc@43))
+
+Tokens Formed By The Lexer :
+
+Without Flags : Many, not writing
+
+With Flags : There comes a KET after the token TERM("engine")
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+89.
+Query: vervangen # "/
+
+Query object returned by parsing without flags : Query(Zvervangen@1)
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("vervangen")
+
+With Flags : TERM("vervangen"), QUOTE
+
+Reason For Parse Error : There must be an ending QUOTE if there's a beginning of quote.
+
+
+
+
+90.
+Query: while(list($key, $val) = each($HTTP_POST_VARS))
+
+Query object returned by parsing without flags : Query((((((while@1 OR list@2) OR Zkey@3) OR Zval@4) OR each@5) OR
+                                                 http_post_vars@6))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("while"), TERM("list"), TERM("key"), TERM("val"), TERM("each"), TERM("http_post_vars")
+
+With Flags : TERM("while"), TERM("list"), TERM("key"), TERM("val"), KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+91.
+Query: mag mijn waarschuwing nu weg ? ;)
+
+Query object returned by parsing without flags : Query((Zmag@1 OR Zmijn@2 OR Zwaarschuw@3 OR Znu@4 OR Zweg@5))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("mag"), GROUP_TERM("mijn"), GROUP_TERM("waarschuwing"), GROUP_TERM("nu"), GROUP_TERM("weg"),
+
+With Flags : TERM("mag"), GROUP_TERM("mijn"), GROUP_TERM("waarschuwing"), GROUP_TERM("nu"), GROUP_TERM("weg"), KET
+
+Reason For Parse Error : Same as 1. Also emoticons.
+
+
+
+
+92.
+Query: preg_replace (.*?)
+
+Query object returned by parsing without flags : Query(Zpreg_replac@1)
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("preg_replace")
+
+With Flags : TERM("preg_replace"), BRA, KET
+
+Reason For Parse Error : Empty Brackets. Characters ignored.
+
+
+
+
+93.
+Query: formule excel #naam"?"
+
+Query object returned by parsing without flags : Query(((Zformul@1 OR Zexcel@2) OR naam@3))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("formule"), GROUP_TERM("excel"), TERM("naam")
+
+With Flags : TERM("formule"), GROUP_TERM("excel"), TERM("naam"), QUOTE, QUOTE
+
+Reason For Parse Error : Can't have empty quotes
+
+
+
+
+94.
+Query: ->
+
+Query object returned by parsing without flags : Query()
+
+Tokens Formed By The Lexer :
+
+Without Flags :
+
+With Flags : HATE
+
+Reason For Parse Error : There must be some term after HATE. Also characters ignored.
+
+
+
+
+
+95.
+Query: automatisch op All Flis (*.*)
+
+Query object returned by parsing without flags : Query((Zautomatisch@1 OR Zop@2 OR all@3 OR flis@4))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("automatisch"), GROUP_TERM("op"), GROUP_TERM("all"), GROUP_TERM("flis")
+
+With Flags : TERM("automatisch"), GROUP_TERM("op"), GROUP_TERM("all"), GROUP_TERM("flis"), BRA, KET
+
+Reason For Parse Error : Can't have empty quotes. Characters ignored.
+
+
+
+
+96.
+Query: en-US; rv:1.3b) Gecko/20030210
+
+Query object returned by parsing without flags : Query((((en@1 PHRASE 2 us@2) OR (rv@3 PHRASE 2 1.3b@4)) OR (gecko@5 PHRASE
+                                                 2 20030210@6)))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("en"), PHR_TERM("us"), TERM("rv"), PHR_TERM("1.3b"), TERM("gecko"), PHR_TERM("20030210")
+
+With Flags : TERM("en"), PHR_TERM("us"), TERM("rv"), PHR_TERM("1.3b"), KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+97.
+Query: (./) chmod.sh
+
+Query object returned by parsing without flags : Query((chmod@1 PHRASE 2 sh@2))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("chmod"), PHR_TERM("sh")
+
+With Flags : BRA, KET
+
+Reason For Parse Error : Empty brackets. Characters ignored.
+
+
+
+
+98.
+Query: IIS getenv(REMOTE_HOST)_
+
+Query object returned by parsing without flags : Query((((iis@1 OR getenv@2) OR remote_host@3) OR _@4))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("iis"), GROUP_TERM("getenv"), TERM("remote_host"), TERM("_")
+
+With Flags : TERM("iis"), GROUP_TERM("getenv"), TERM("remote_host"), KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+99.
+Query: IIS en getenv(REMOTE_HOST)
+
+Query object returned by parsing without flags : Query(((iis@1 OR Zen@2 OR getenv@3) OR remote_host@4))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("iis"), GROUP_TERM("en"), GROUP_TERM("getenv"), TERM("remote_host")
+
+With Flags : TERM("iis"), GROUP_TERM("en"), GROUP_TERM("getenv"), TERM("remote_host"), KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+100.
+Query: php getenv("HTTP_REFERER")
+
+Query object returned by parsing without flags : Query(((Zphp@1 OR getenv@2) OR http_referer@3))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("php"), GROUP_TERM("getenv"), TERM("http_referer")
+
+With Flags : TERM("php"), GROUP_TERM("getenv"), QUOTE, TERM("http_referer"), QUOTE, KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+101.
+Query: "[......"
+
+Query object returned by parsing without flags : Query()
+
+Tokens Formed By The Lexer :
+
+Without Flags :
+
+With Flags : QUOTE, QUOTE,
+
+Reason For Parse Error : Can't have empty quotes. Characters ignored.
+
+
+
+
+102.
+Query: if (mysql_num_rows($resultaat)==1)
+
+Query object returned by parsing without flags : Query((((Zif@1 OR mysql_num_rows@2) OR Zresultaat@3) OR 1@4))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("if"), TERM("mysql_num_rows"), TERM("resultaat"), TERM("1")
+
+With Flags : TERM("if"), BRA, TERM("mysql_num_rows"), TERM("resultaat"), KET, TERM("1"), KET
+
+Reason For Parse Error : Same as 1. Also here extra thing that there can be nested brackets such that some BRA are detected
+                         and some are not (corresponding to the case if no whitespace beore them and they are just after a word)
+
+
+
+
+103.
+Query: Server.CreateObject("Persits.Upload.1")
+
+Query object returned by parsing without flags : Query(((server@1 PHRASE 2 createobject@2) OR (persits@3 PHRASE 3 upload@4
+                                                 PHRASE 3 1@5)))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("server"), PHR_TERM("createobject"), TERM("persits"), PHR_TERM("upload"), PHR_TERM("1")
+
+With Flags : TERM("server"), PHR_TERM("createobject"), QUOTE, TERM("persits"), TERM("upload"), TERM("1"), QUOTE, KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+104.
+Query: if(cod>9999999)cod=parseInt(cod/64)
+
+Query object returned by parsing without flags : Query((((((if@1 OR cod@2) OR 9999999@3) OR cod@4) OR parseint@5) OR (cod@6
+                                                 PHRASE 2 64@7)))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("if"), TERM("cod"), TERM("9999999"), TERM("cod"), TERM("parseint"), TERM("cod"), PHR_TERM("64")
+
+With Flags : TERM("if"), TERM("cod"), TERM("9999999"), KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+105.
+Query: if (cod>9999999
+
+Query object returned by parsing without flags : Query(((Zif@1 OR cod@2) OR 9999999@3))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("if"), TERM("cod"), TERM("9999999")
+
+With Flags : TERM("if"), BRA, TERM("cod"), TERM("9999999")
+
+Reason For Parse Error : No KET corresponding to BRA.
+
+
+
+
+106.
+Query: <BR>window.resizeBy(offsetX,offsetY)<P>kweet
+
+Query object returned by parsing without flags : Query((((((br@1 OR (window@2 PHRASE 2 resizeby@3)) OR Zoffsetx@4) OR
+                                                 Zoffseti@5) OR p@6) OR Zkweet@7))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("br"), TERM("window"), PHR_TERM("resizeby"), TERM("offsetx"), TERM("offsety"), TERM("p"), TERM("kweet"),
+
+With Flags : TERM("br"), TERM("window"), PHR_TERM("resizeby"), TERM("offsetx"), TERM("offsety"), KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+107.
+Query: linux humor :)
+
+Query object returned by parsing without flags : Query((Zlinux@1 OR Zhumor@2))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("linux"), GROUP_TERM("humor")
+
+With Flags : TERM("linux"), GROUP_TERM("humor"), KET
+
+Reason For Parse Error : Same as 1. Also emoticons.
+
+
+
+
+108.
+Query: remote_smtp defer (-44)
+
+Query object returned by parsing without flags : Query(((Zremote_smtp@1 OR Zdefer@2) OR 44@3))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("remote_smtp"), GROUP_TERM("defer"), TERM("44")
+
+With Flags : TERM("remote_smtp"), GROUP_TERM("defer"), BRA, HATE, TERM("44"), KET
+
+Reason For Parse Error : Can't figure out. A query like "(+xapian)". doesn't gives an error but a query like "(-xapian)",
+                         does gives an error.
+                         Though the production for both seems to be same - prob ::= LOVE term. and prob ::= HATE term.
+
+
+
+
+109.
+Query:  txtlogin.getText().trim().toUpperCase().intern() == inuser[2 * (i - 1) + 2].trim().toUpperCase().intern() &&
+        txtpass.getText().trim().toUpperCase().intern() == inuser[2 * (i - 1) + 3].trim().toUpperCase().intern())
+
+Query object returned by parsing without flags : Query(((((((((((((((((((((((((txtlogin@1 PHRASE 2 gettext@2) OR trim@3)
+                                                 OR touppercase@4) OR intern@5) OR inuser@6) OR 2@7) OR Zi@8) OR 1@9)
+                                                 OR 2@10) OR trim@11) OR touppercase@12) OR intern@13)
+                                                 OR (txtpass@14
+
+Tokens Formed By The Lexer :
+
+Without Flags : Many, not writing.
+
+With Flags : TERM("txtlogin"), PHR_TERM("gettext"), KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+110.
+Query: Koper + amoniak (NH2
+
+Query object returned by parsing without flags : Query(((koper@1 OR Zamoniak@2) OR nh2@3))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("koper"), TERM("amoniak"), TERM("nh2")
+
+With Flags : TERM("koper"), TERM("amoniak"), BRA, TERM("nh2")
+
+Reason For Parse Error : No KET for the token BRA.
+
+
+
+
+111.
+Query: er is een gereserveerde fout (-1104) opgetreden
+
+Query object returned by parsing without flags : Query((((Zer@1 OR Zis@2 OR Zeen@3 OR Zgereserveerd@4 OR Zfout@5) OR 1104@6)
+                                                 OR Zopgetreden@7))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("er"), GROUP_TERM("is"), GROUP_TERM("een"), GROUP_TERM("gereserveerde"), GROUP_TERM("fout"), TERM("1104"),
+                TERM("opgetreden")
+
+With Flags :    TERM("er"), GROUP_TERM("is"), GROUP_TERM("een"), GROUP_TERM("gereserveerde"), GROUP_TERM("fout"), BRA, HATE,
+                TERM("1104"), KET
+
+Reason For Parse Error : Same problem as the one some case before. Can't figure out. //TODO - sehaj
+
+
+
+
+112.
+Query: Cor \(CCN\)'" <cor.kloet@ccn.controlec.nl>
+
+Query object returned by parsing without flags : Query(((cor@1 OR ccn@2) OR (cor@3 PHRASE 5 kloet@4 PHRASE 5 ccn@5 PHRASE
+                                                 5 controlec@6 PHRASE 5 nl@7)))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("cor"), TERM("ccn"), TERM("cor"), PHR_TERM("kloet"), PHR_TERM("ccn"), PHR_TERM("controlec"), PHR_TERM("nl")
+
+With Flags : TERM("cor"), TERM("ccn"), KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+113.
+Query: "~" + "c:\"
+
+Query object returned by parsing without flags : Query(Zc@1)
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("c"),
+
+With Flags : QUOTE, QUOTE,
+
+Reason For Parse Error : Can't have empty quotes. Characters ignored.
+
+
+
+
+114.
+Query: mysql count(*)
+
+Query object returned by parsing without flags : Query((Zmysql@1 OR count@2))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("mysql"), GROUP_TERM("count")
+
+With Flags : TERM("mysql"), GROUP_TERM("count"), KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+115.
+Query: for %f in (*.*) do
+
+Query object returned by parsing without flags : Query(((Zfor@1 OR (Zf@2 OR Zin@3)) OR Zdo@4))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("for"), TERM("f"), GROUP_TERM("in"), TERM("do")
+
+With Flags : TERM("for"), TERM("f"), GROUP_TERM("in"), BRA, KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+116.
+Query: raar "~" bestand
+
+Query object returned by parsing without flags : Query((Zraar@1 OR Zbestand@2))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("raar"), TERM("bestand")
+
+With Flags : TERM("raar"), QUOTE, QUOTE
+
+Reason For Parse Error : Can't have empty quotes. Characters ignored.
+
+
+
+
+117.
+Query: GA-7VRXP(2.0)
+
+Query object returned by parsing without flags : Query(((ga@1 PHRASE 2 7vrxp@2) OR 2.0@3))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("ga"), PHR_TERM("7vrxp"), TERM("2.0")
+
+With Flags : TERM("ga"), PHR_TERM("7vrxp"), TERM("2.0"), KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+118.
+Query: ~ Could not retrieve directory listing for "/"
+
+Query object returned by parsing without flags : Query((could@1 OR Znot@2 OR Zretriev@3 OR Zdirectori@4 OR Zlist@5 OR Zfor@6))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("could"), GROUP_TERM("not"), GROUP_TERM("retrieve"), GROUP_TERM("directory"), GROUP_TERM("listing"),
+                GROUP_TERM("for")
+
+With Flags :    TERM("could"), GROUP_TERM("not"), GROUP_TERM("retrieve"), GROUP_TERM("directory"), GROUP_TERM("listing"),
+                GROUP_TERM("for"), QUOTE, QUOTE
+
+Reason For Parse Error : Can't have empty quotes. Characters ignored.
+
+
+
+
+119.
+Query: asp CreateObject("Word.Document")
+
+Query object returned by parsing without flags : Query(((Zasp@1 OR createobject@2) OR (word@3 PHRASE 2 document@4)))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("asp"), GROUP_TERM("createobject"), TERM("word"), PHR_TERM("document")
+
+With Flags : TERM("asp"), GROUP_TERM("createobject"), QUOTE, TERM("word"), TERM("document"), QUOTE, KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+120.
+Query: parent.document.getElementById(\"leftmenu\").cols
+
+Query object returned by parsing without flags : Query((((parent@1 PHRASE 3 document@2 PHRASE 3 getelementbyid@3) OR
+                                                 leftmenu@4) OR Zcol@5))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("parent"), PHR_TERM("document"), PHR_TERM("getelementbyid"), TERM("leftmenu"), TERM("cols")
+
+With Flags : TERM("parent"), PHR_TERM("document"), PHR_TERM("getelementbyid"), QUOTE, TERM("leftmenu"), QUOTE, KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+121.
+Query: <% if not isEmpty(Request.QueryString) then
+
+Query object returned by parsing without flags : Query((((Zif@1 OR Znot@2 OR isempty@3) OR (request@4 PHRASE 2 querystring@5))
+                                                 OR Zthen@6))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("if"), GROUP_TERM("not"), GROUP_TERM("isempty"), TERM("request"), PHR_TERM("querystring"), TERM("then")
+
+With Flags : TERM("if"), GROUP_TERM("not"), GROUP_TERM("isempty"), TERM("request"), PHR_TERM("querystring"), KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+122.
+Query: sql server install fails error code (-1)
+
+Query object returned by parsing without flags : Query(((Zsql@1 OR Zserver@2 OR Zinstal@3 OR Zfail@4 OR Zerror@5 OR Zcode@6)
+                                                 OR 1@7))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("sql"), GROUP_TERM("server"), GROUP_TERM("install"), GROUP_TERM("fails"), GROUP_TERM("error"),
+GROUP_TERM("code"), TERM("1")
+
+With Flags : TERM("sql"), GROUP_TERM("server"), GROUP_TERM("install"), GROUP_TERM("fails"), GROUP_TERM("error"),
+GROUP_TERM("code"), BRA, HATE, TERM("1"), KET
+
+Reason For Parse Error : Same as the one detected earlier. Can't really figure out why? //TODO - sehaj
+
+
+
+
+123.
+Query: session_register("login");
+
+Query object returned by parsing without flags : Query((session_register@1 OR login@2))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("session_register"), TERM("login")
+
+With Flags : TERM("session_register"), QUOTE, TERM("login"), QUOTE, KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+124.
+Query: You have an error in your SQL syntax near '1')' at line 1
+
+Query object returned by parsing without flags : Query((((you@1 OR Zhave@2 OR Zan@3 OR Zerror@4 OR Zin@5 OR Zyour@6 OR
+                                                 sql@7 OR Zsyntax@8 OR Znear@9) OR 1@10) OR (Zat@11 OR Zline@12 OR 1@13)))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("you"), GROUP_TERM("have"), GROUP_TERM("an"), GROUP_TERM("error"), GROUP_TERM("in"), GROUP_TERM("your"),
+                GROUP_TERM("sql"), GROUP_TERM("syntax"), GROUP_TERM("near"), TERM("1"), TERM("at"), GROUP_TERM("line"),
+                GROUP_TERM("1")
+
+With Flags : TERM("you"), GROUP_TERM("have"), GROUP_TERM("an"), GROUP_TERM("error"), GROUP_TERM("in"), GROUP_TERM("your"),
+             GROUP_TERM("sql"), GROUP_TERM("syntax"), GROUP_TERM("near"), TERM("1"), KET
+
+Reason For Parse Error : Same as 1.
+
+
+
+
+125.
+Query: NEAR 207 46 249 27
+
+Query object returned by parsing without flags : Query((near@1 OR 207@2 OR 46@3 OR 249@4 OR 27@5))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("near"), GROUP_TERM("207"), GROUP_TERM("46"), GROUP_TERM("249"), GROUP_TERM("27")
+
+With Flags : NEAR, TERM("207")
+
+Reason For Parse Error : There must a term before the token NEAR, since the corresponding production is 
+                         near_expr ::= TERM NEAR TERM.  and near_expr ::= near_expr NEAR TERM.
+
+
+
+
+126.
+Query: - NEAR 12V voeding
+
+Query object returned by parsing without flags : Query((near@1 OR 12v@2 OR Zvoed@3))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("near"), GROUP_TERM("12v"), GROUP_TERM("voeding")
+
+With Flags : NEAR, TERM("12v")
+
+Reason For Parse Error : Same as above.
+
+
+
+
+
+127.
+Query: waarom "~" in directorynaam
+
+Query object returned by parsing without flags : Query((Zwaarom@1 OR (Zin@2 OR Zdirectorynaam@3)))
+
+Tokens Formed By The Lexer :
+
+Without Flags : TERM("waarom"), TERM("in"), GROUP_TERM("directorynaam"),
+
+With Flags : TERM("waarom"), QUOTE, QUOTE,
+
+Reason For Parse Error : Can't have empty quotes. Characters ignored.
+
+
