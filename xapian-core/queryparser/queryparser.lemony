@@ -114,6 +114,10 @@ is_positional(Xapian::Query::op op)
     return (op == Xapian::Query::OP_PHRASE || op == Xapian::Query::OP_NEAR);
 }
 
+inline bool
+pseudo_brackets_tell(unsigned ch) {
+    return ch == ')' || ch == '(' || is_wordchar(ch);
+}
 
 inline bool
 pseudo_quotes_tell(unsigned ch) {
@@ -998,6 +1002,21 @@ just_had_operator_needing_term:
 		    break;
 		}
 		if (mode == DEFAULT && (flags & FLAG_BOOLEAN)) {
+		    // Ignore brackets containing only non-word character(s)
+		    // inside them
+		    // Also check for '(' since there may be the case of
+		    // nested brackets. If so, then would be better to just
+		    // refer the present character as token BRA rather than
+		    // iterating further to see what the case is.
+		    Utf8Iterator bra_ket_wordchar = find_if(it, end, pseudo_brackets_tell);
+		    if (bra_ket_wordchar == end || *bra_ket_wordchar == ')') {
+			// If reached end or reached ')', then don't consider
+			// it as the token BRA and move the iterator forwards.
+			    it = bra_ket_wordchar;
+			    if (it == end) goto done;
+			    newprev = *it++;
+			    break;
+		    }
 		    prefix_stack.push_back(prefix_stack.back());
 		    Parse(pParser, BRA, NULL, &state);
 		}
