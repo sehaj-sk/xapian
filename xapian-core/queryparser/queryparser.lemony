@@ -969,11 +969,9 @@ just_had_operator_needing_term:
 		break;
 
 	      case ')': // End of bracketed subexpression.
-		if (mode == DEFAULT && (flags & FLAG_BOOLEAN)) {
+		if (mode == DEFAULT && (flags & FLAG_BOOLEAN) && prefix_stack.size() > 1) {
 		    // Remove the prefix we pushed for the corresponding BRA.
-		    // If brackets are unmatched, it's a syntax error, but
-		    // that's no excuse to SEGV!
-		    if (prefix_stack.size() > 1) prefix_stack.pop_back();
+		    prefix_stack.pop_back();
 		    Parse(pParser, KET, NULL, &state);
 		}
 		break;
@@ -1345,6 +1343,19 @@ done:
 	// Implicitly close any unclosed quotes...
 	if (mode == IN_QUOTES || mode == IN_PREFIXED_QUOTES)
 	    Parse(pParser, QUOTE, NULL, &state);
+
+	// Remove the prefix we pushed for any unclosed quotes before
+	// trying to close the unmatched brackets
+	// Example query: latest (watches site:"xapian
+	// In this example, "site" corresponds to a non-boolean filter
+	if (mode == IN_PREFIXED_QUOTES)
+	    prefix_stack.pop_back();
+
+	// To avoid possible parse errors related to unmatched brackets
+	while (prefix_stack.size() > 1) {
+	    Parse(pParser, KET, NULL, &state);
+	    prefix_stack.pop_back();
+	}
 	Parse(pParser, 0, NULL, &state);
     }
 
