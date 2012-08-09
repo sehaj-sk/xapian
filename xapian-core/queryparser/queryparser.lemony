@@ -1939,6 +1939,7 @@ prob_expr(E) ::= prob(P). {
     if (P->hate && !P->hate->empty()) {
 	if (!E) {
 	    // Can't just hate!
+	    state->error = "Syntax Error: Can't just HATE a term. Either remove '-' or give some non-hated term(s).";
 	    yy_parse_failed(yypParser);
 	    return;
 	}
