@@ -2955,6 +2955,54 @@ static bool test_qp_errorrecovery_ignorelovehate()
     return true;
 }
 
+static const test test_negativenumerals_queries[] = {
+    // Following examples show how '+'/'-' are not treated as LOVE/HATE
+    // if they are followed by numeral. This allows us to make sure that
+    // negative numbers are not interpreted as numbers being hated.
+    { "foo -10", "(Zfoo@1 OR 10@2)" },
+    { "foo (-10)", "(Zfoo@1 OR 10@2)" },
+    { "foo (+10)", "(Zfoo@1 OR 10@2)" },
+    { "foo (10)", "(Zfoo@1 OR 10@2)" },
+    { "foo (-10, -20)", "(Zfoo@1 OR (10@2 OR 20@3))" },
+    { "foo (-10, name)", "(Zfoo@1 OR (10@2 OR Zname@3))" },
+    { "foo (name, -10)", "(Zfoo@1 OR (Zname@2 OR 10@3))" },
+    { "foo (-3.14)", "(Zfoo@1 OR 3.14@2)" },
+    { "foo (-3,000)", "(Zfoo@1 OR 3,000@2)" },
+    // In the following query, the numeral should be hated.
+    { "foo -\"10\"", "(Zfoo@1 AND_NOT 10@2)" },
+    // In the following query the part inside brackets should be hated.
+    { "xapian -(10 google)", "(Zxapian@1 AND_NOT (10@2 OR Zgoogl@3))" },
+    { NULL, NULL }
+};
+
+static bool test_qp_errorrecovery_negativenumerals()
+{
+    Xapian::QueryParser qp;
+    qp.set_stemmer(Xapian::Stem("english"));
+    qp.set_stemming_strategy(Xapian::QueryParser::STEM_SOME);
+    for (const test *p = test_negativenumerals_queries; p->query; ++p) {
+        string expect, parsed;
+        if (p->expect)
+            expect = p->expect;
+        else
+            expect = "parse error";
+        try {
+            Xapian::Query qobj = qp.parse_query(p->query);
+            parsed = qobj.get_description();
+            expect = string("Query(") + expect + ')';
+        } catch (const Xapian::QueryParserError &e) {
+            parsed = e.get_msg();
+        } catch (const Xapian::Error &e) {
+            parsed = e.get_description();
+        } catch (...) {
+            parsed = "Unknown exception!";
+        }
+        tout << "Query: " << p->query << '\n';
+        TEST_STRINGS_EQUAL(parsed, expect);
+    }
+    return true;
+}
+
 /// Test cases for the QueryParser.
 static const test_desc tests[] = {
     TESTCASE(queryparser1),
@@ -3003,6 +3051,7 @@ static const test_desc tests[] = {
     TESTCASE(qp_errorrecovery_dontignorebra),
     TESTCASE(qp_errorrecovery_ignorequotes),
     TESTCASE(qp_errorrecovery_ignorelovehate),
+    TESTCASE(qp_errorrecovery_negativenumerals),
     END_OF_TESTCASES
 };
 
