@@ -2874,6 +2874,45 @@ static bool test_qp_errorrecovery_dontignorebra()
     return true;
 }
 
+static const test test_ignorequotes_queries[] = {
+    { "\"~\" home", "Zhome@1" },
+    { "\"+/-\" query", "Zqueri@1" },
+    { "either \"+\" or \"-\"", "(Zeither@1 OR Zor@2)" },
+    { "random \"^%#@@><>\" query", "(Zrandom@1 OR Zqueri@2)" },
+    { "testing \"..//..//\"", "Ztest@1" },
+    // Here quotes should not be ignored.
+    { "search \"*-+file saved\"", "(Zsearch@1 OR (file@2 PHRASE 2 saved@3))" },
+    { NULL, NULL }
+};
+
+static bool test_qp_errorrecovery_ignorequotes()
+{
+    Xapian::QueryParser qp;
+    qp.set_stemmer(Xapian::Stem("english"));
+    qp.set_stemming_strategy(Xapian::QueryParser::STEM_SOME);
+    for (const test *p = test_ignorequotes_queries; p->query; ++p) {
+        string expect, parsed;
+        if (p->expect)
+            expect = p->expect;
+        else
+            expect = "parse error";
+        try {
+            Xapian::Query qobj = qp.parse_query(p->query);
+            parsed = qobj.get_description();
+            expect = string("Query(") + expect + ')';
+        } catch (const Xapian::QueryParserError &e) {
+            parsed = e.get_msg();
+        } catch (const Xapian::Error &e) {
+            parsed = e.get_description();
+        } catch (...) {
+            parsed = "Unknown exception!";
+        }
+        tout << "Query: " << p->query << '\n';
+        TEST_STRINGS_EQUAL(parsed, expect);
+    }
+    return true;
+}
+
 /// Test cases for the QueryParser.
 static const test_desc tests[] = {
     TESTCASE(queryparser1),
@@ -2920,6 +2959,7 @@ static const test_desc tests[] = {
     TESTCASE(qp_errorrecovery_unmatchedbrackets),
     TESTCASE(qp_errorrecovery_ignorebrackets),
     TESTCASE(qp_errorrecovery_dontignorebra),
+    TESTCASE(qp_errorrecovery_ignorequotes),
     END_OF_TESTCASES
 };
 
