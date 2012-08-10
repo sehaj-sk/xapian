@@ -157,6 +157,18 @@ is_numeral(Utf8Iterator it)
     return p == end || is_whitespace(*p);
 }
 
+void
+QueryParser::Internal::initialize_parse_error()
+{
+    parse_error.BRA_MISSING.clear();
+    parse_error.KET_MISSING.clear();
+    parse_error.PSEUDO_LOVE.clear();
+    parse_error.PSEUDO_HATE.clear();
+    parse_error.PSEUDO_BRACKET.clear();
+    parse_error.PSEUDO_QUOTE.clear();
+    parse_error.ONLY_HATE = false;
+}
+
 /// A structure identifying a group of filter terms or a value range.
 struct filter_group_id {
     /** The field info for boolean filter terms.
@@ -278,9 +290,10 @@ class State {
     Query query;
     const char * error;
     unsigned flags;
+    bool ONLY_HATE;
 
     State(QueryParser::Internal * qpi_, unsigned flags_)
-	: qpi(qpi_), error(NULL), flags(flags_) { }
+	: qpi(qpi_), error(NULL), flags(flags_), ONLY_HATE(false) { }
 
     string stem_term(const string &term) {
 	return qpi->stemmer(term);
@@ -818,6 +831,7 @@ QueryParser::Internal::parse_query(const string &qs, unsigned flags,
     // string, we must keep track of the offset due to previous corrections.
     int correction_offset = 0;
     corrected_query.resize(0);
+    initialize_parse_error();
 
     // Stack of prefixes, used for phrases and subexpressions.
     list<const FieldInfo *> prefix_stack;
@@ -952,13 +966,39 @@ just_had_operator_needing_term:
 		    // Can't count for nested quotes here since the character
 		    // for opening as well as closing quotes is same - '"' !
 		    Utf8Iterator quote_or_wordchar = find_if(it, end, pseudo_quotes_tell);
+
 		    if (quote_or_wordchar == end || is_double_quote(*quote_or_wordchar)) {
-			// If reached end or reached '"', then don't consider
-			// it as the token QUOTE and move the iterator forwards.
-			it = quote_or_wordchar;
-			if (it == end) goto done;
-			newprev = *it++;
-			break;
+		        if (corrected_query.empty())    corrected_query = qs;
+		        size_t error_start_index = it.raw() - qs.data() - 1;
+		        size_t error_end_index = quote_or_wordchar.raw() - qs.data() + 1;
+		        size_t n = error_end_index - error_start_index;
+		        size_t pos = error_start_index + correction_offset;
+		        unsigned look_ahead;
+		        if (quote_or_wordchar != end) {
+		            Utf8Iterator sneak_ahead = quote_or_wordchar;
+		            ++sneak_ahead;
+		            look_ahead = *sneak_ahead;
+		        } else {
+		            look_ahead = ' ';
+		        }
+		        if ((is_not_whitespace(prev) && quote_or_wordchar == end) ||
+		             (is_not_whitespace(prev) && is_not_whitespace(look_ahead))) {
+		            corrected_query.replace(pos, n, " ");
+		            correction_offset += 1;
+		        } else {
+		            corrected_query.replace(pos, n, "");
+		        }
+		        parse_error.PSEUDO_QUOTE.push_back(error_start_index);
+		        correction_offset -= n;
+
+		        if (flags & FLAG_ERROR_RECOVERY) {
+		            // If reached end or reached '"', then don't consider
+		            // it as the token QUOTE and move the iterator forwards.
+		            it = quote_or_wordchar;
+		            if (it == end) goto done;
+		            newprev = *it++;
+		            break;
+		        }
 		    }
 		}
 		if (flags & QueryParser::FLAG_PHRASE) {
@@ -981,15 +1021,33 @@ just_had_operator_needing_term:
 		    // Or if not after whitespace or an open bracket.
 		    break;
 		}
-		if (is_whitespace(*it) || *it == '+' || *it == '-'  || pseudo_lovehate_checker(it)) {
-		    // Ignore + or - followed by a space, or further + or -,
-		    // or if there are only non-word character(s) after them till
-		    // the next whitespace or the end of query (such as "+...").
+		if (is_whitespace(*it) || *it == '+' || *it == '-') {
+		    // Ignore + or - followed by a space, or further + or -.
 		    // Postfix + (such as in C++ and H+) is handled as part of
 		    // the term lexing code in parse_term().
 		    newprev = *it++;
 		    break;
 		}
+
+		if (pseudo_lovehate_checker(it)) {
+		    // Ignore + or - if there are only non-word character(s) after them
+		    // till the next whitespace or the end of query (such as "+...").
+		    if (corrected_query.empty())    corrected_query = qs;
+		    size_t error_start_index = it.raw() - qs.data() - 1;
+		    size_t pos = error_start_index + correction_offset;
+		    corrected_query.replace(pos, 1, "");
+		    correction_offset -= 1;
+		    if (ch == '+') {
+		        parse_error.PSEUDO_LOVE.push_back(error_start_index);
+		    } else {
+		        parse_error.PSEUDO_HATE.push_back(error_start_index);
+		    }
+		    if (flags & FLAG_ERROR_RECOVERY) {
+		        newprev = *it++;
+		        break;
+		    }
+		}
+
 		if (mode == DEFAULT && (flags & FLAG_LOVEHATE)) {
 		    // If followed by numeral, then don't consider as the
 		    // token LOVE/HATE. But take care that if there is a
@@ -1030,23 +1088,60 @@ just_had_operator_needing_term:
 		    // refer the present character as token BRA rather than
 		    // iterating further to see what the case is.
 		    Utf8Iterator bra_ket_wordchar = find_if(it, end, pseudo_brackets_tell);
+
 		    if (bra_ket_wordchar == end || *bra_ket_wordchar == ')') {
-			// If reached end or reached ')', then don't consider
-			// it as the token BRA and move the iterator forwards.
-			    it = bra_ket_wordchar;
-			    if (it == end) goto done;
-			    newprev = *it++;
-			    break;
+		        if (corrected_query.empty())    corrected_query = qs;
+		        size_t error_start_index = it.raw() - qs.data() - 1;
+		        size_t error_end_index = bra_ket_wordchar.raw() - qs.data() + 1;
+		        size_t n = error_end_index - error_start_index;
+		        size_t pos = error_start_index + correction_offset;
+		        unsigned look_ahead;
+		        if (bra_ket_wordchar != end) {
+		            Utf8Iterator sneak_ahead = bra_ket_wordchar;
+		            ++sneak_ahead;
+		            look_ahead = *sneak_ahead;
+		        } else {
+		            look_ahead = ' ';
+		        }
+		        if ((is_not_whitespace(prev) && bra_ket_wordchar == end) ||
+		             (is_not_whitespace(prev) && is_not_whitespace(look_ahead))) {
+		            corrected_query.replace(pos, n, " ");
+		            correction_offset += 1;
+		        } else {
+		            corrected_query.replace(pos, n, "");
+		        }
+		        parse_error.PSEUDO_BRACKET.push_back(error_start_index);
+		        correction_offset -= n;
+		        if (flags & FLAG_ERROR_RECOVERY) {
+		            // If reached end or reached ')', then don't consider
+		            // it as the token BRA and move the iterator forwards.
+		            it = bra_ket_wordchar;
+		            if (it == end) goto done;
+		            newprev = *it++;
+		            break;
+		        }
 		    }
+		    maybe_unmatched_bra.push_back(it.raw() - qs.data() - 1);
 		    prefix_stack.push_back(prefix_stack.back());
 		    Parse(pParser, BRA, NULL, &state);
 		}
 		break;
 
 	      case ')': // End of bracketed subexpression.
-		if (mode == DEFAULT && (flags & FLAG_BOOLEAN) && prefix_stack.size() > 1) {
+		if (mode == DEFAULT && (flags & FLAG_BOOLEAN)) {
 		    // Remove the prefix we pushed for the corresponding BRA.
-		    prefix_stack.pop_back();
+		    if (prefix_stack.size() <= 1) {
+		        size_t error_start_index = it.raw() - qs.data() -1;
+		        size_t pos = error_start_index + correction_offset;
+		        if (corrected_query.empty())   corrected_query = qs;
+		        corrected_query.replace(pos, 1, "");
+		        correction_offset -= 1;
+		        parse_error.BRA_MISSING.push_back(error_start_index);
+		        if (flags & FLAG_ERROR_RECOVERY)    break;
+		    } else {
+		        prefix_stack.pop_back();
+		    }
+		    if (!maybe_unmatched_bra.empty())   maybe_unmatched_bra.pop_back();
 		    Parse(pParser, KET, NULL, &state);
 		}
 		break;
@@ -1150,6 +1245,8 @@ just_had_operator_needing_term:
 		    if (ch == '(' && (flags & FLAG_BOOLEAN)) {
 			// Prefixed subexpression, e.g.: title:(fast NEAR food)
 			mode = DEFAULT;
+			size_t start_index = it.raw() - qs.data() - 1;
+			maybe_unmatched_bra.push_back(start_index);
 			Parse(pParser, BRA, NULL, &state);
 			it = p;
 			newprev = ch;
@@ -1427,14 +1524,24 @@ done:
 	    prefix_stack.pop_back();
 
 	// To avoid possible parse errors related to unmatched brackets
-	while (prefix_stack.size() > 1) {
-	    Parse(pParser, KET, NULL, &state);
-	    prefix_stack.pop_back();
+	if (flags & FLAG_ERROR_RECOVERY) {
+	    while (prefix_stack.size() > 1) {
+	        Parse(pParser, KET, NULL, &state);
+	        prefix_stack.pop_back();
+	    }
 	}
 	Parse(pParser, 0, NULL, &state);
+
+    while (!maybe_unmatched_bra.empty()) {
+        if (corrected_query.empty())    corrected_query = qs;
+        corrected_query += ")";
+        parse_error.KET_MISSING.push_back(maybe_unmatched_bra.front());
+        maybe_unmatched_bra.pop_front();
+    }
     }
 
     errmsg = state.error;
+    parse_error.ONLY_HATE = state.ONLY_HATE;
     return state.query;
 }
 
@@ -1960,7 +2067,7 @@ prob_expr(E) ::= prob(P). {
     if (P->hate && !P->hate->empty()) {
 	if (!E) {
 	    // Can't just hate!
-	    state->error = "Syntax Error: Can't just HATE a term. Either remove '-' or give some non-hated term(s).";
+	    state->ONLY_HATE = true;
 	    yy_parse_failed(yypParser);
 	    return;
 	}

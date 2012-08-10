@@ -31,6 +31,8 @@
 
 #include <set>
 #include <string>
+#include <list>
+#include <sstream>
 
 namespace Xapian {
 
@@ -364,6 +366,149 @@ class XAPIAN_VISIBILITY_DEFAULT NumberValueRangeProcessor : public StringValueRa
     Xapian::valueno operator()(std::string &begin, std::string &end);
 };
 
+/// Represents the types of parse error if the query fails to get parsed.
+struct  XAPIAN_VISIBILITY_DEFAULT parse_error_s {
+    /** Represents missing opening bracket '('.
+     *
+     *  Contains a list of position(s) of closing bracket, ')' in the query,
+     *  for which no corresponding opening bracket was present. An empty
+     *  list means no such error found.
+     *
+     *  Example Query: a OR b) AND c
+     */
+    std::list<int> BRA_MISSING;
+
+    /** Represents missing closing bracket ')'.
+     *
+     *  Contains a list of position(s) of opening bracket, '(' in the query,
+     *  for which no corresponding closing bracket was present. An empty
+     *  list means no such error found.
+     *
+     *  Example Query: a AND (b OR c
+     */
+    std::list<int> KET_MISSING;
+
+    /** Represents ineffective LOVE, '+' since followed by only non-word
+     *  characters.
+     *
+     *  Contains a list of position(s) of such '+' in the query. An empty list
+     *  means no such error found.
+     *
+     *  Example Query:  xapian +.... google
+     */
+    std::list<int> PSEUDO_LOVE;
+
+    /** Represents ineffective HATE, '-' since followed by only non-word
+     *  characters.
+     *
+     *  Contains a list of position(s) of such '-' in the query. An empty list
+     *  means no such error found.
+     *
+     *  Example Query:  xapian -.... google
+     */
+    std::list<int> PSEUDO_HATE;
+
+    /** Represents ineffective brackets, containing only non-word characters
+     *  between them.
+     *
+     *  Contains a list of starting position(s) of such brackets in the query.
+     *  An empty list means no such error found.
+     *
+     *  Example Query:  xapian (....) google
+     */
+    std::list<int> PSEUDO_BRACKET;
+
+    /** Represents ineffective quotes, containing only non-word characters
+     *  between them.
+     *
+     *  Contains a list of starting position(s) of such quotes in the query.
+     *  An empty list means no such error found.
+     *
+     *  Example Query:  xapian "...." google
+     */
+    std::list<int> PSEUDO_QUOTE;
+
+    /** Represents a query containing only HATE term(s).
+     *
+     *  Example Query:  (-xapian)
+     */
+    bool ONLY_HATE;
+
+    /** Returns a string describing the details of parse errors. Empty string
+     *  is returned if no parse error was found.
+     */
+    std::string get_error_description_string() {
+        std::ostringstream error_description;
+        std::string spacer(" ");
+
+        if (!BRA_MISSING.empty()) {
+            error_description << "Closing bracket ')' at following position(s) have no corresponding opening bracket '(':\n";
+            for (std::list<int>::iterator it = BRA_MISSING.begin();
+                    it != BRA_MISSING.end(); it++) {
+                error_description << *it;
+                error_description << spacer;
+            }
+            error_description << "\n\n";
+        }
+
+        if (!KET_MISSING.empty()) {
+            error_description << "Opening bracket '(' at following position(s) have no corresponding closing bracket ')':\n";
+            for (std::list<int>::iterator it = KET_MISSING.begin();
+                    it != KET_MISSING.end(); it++) {
+                error_description << *it;
+                error_description << spacer;
+            }
+            error_description << "\n\n";
+        }
+
+        if (!PSEUDO_LOVE.empty()) {
+            error_description << "Ineffective LOVE, '+' since followed by only non-word characters at following position(s):\n";
+            for (std::list<int>::iterator it = PSEUDO_LOVE.begin();
+                    it != PSEUDO_LOVE.end(); it++) {
+                error_description << *it;
+                error_description << spacer;
+            }
+            error_description << "\n\n";
+        }
+
+        if (!PSEUDO_HATE.empty()) {
+            error_description << "Ineffective HATE, '-' since followed by only non-word characters at following position(s):\n";
+            for (std::list<int>::iterator it = PSEUDO_HATE.begin();
+                    it != PSEUDO_HATE.end(); it++) {
+                error_description << *it;
+                error_description << spacer;
+            }
+            error_description << "\n\n";
+        }
+
+        if (!PSEUDO_BRACKET.empty()) {
+            error_description << "Ineffective brackets, containing only non-word characters between them at following position(s):\n";
+            for (std::list<int>::iterator it = PSEUDO_BRACKET.begin();
+                    it != PSEUDO_BRACKET.end(); it++) {
+                error_description << *it;
+                error_description << spacer;
+            }
+            error_description << "\n\n";
+        }
+
+        if (!PSEUDO_QUOTE.empty()) {
+            error_description << "Ineffective quotes, containing only non-word characters between them at following position(s):\n";
+            for (std::list<int>::iterator it = PSEUDO_QUOTE.begin();
+                    it != PSEUDO_QUOTE.end(); it++) {
+                error_description << *it;
+                error_description << spacer;
+            }
+            error_description << "\n\n";
+        }
+
+        if (ONLY_HATE) {
+            error_description << "The query contains only HATE term(s).\n\n";
+        }
+
+        return error_description.str();
+    }
+};
+
 /** Base class for field processors.
  *
  *  Experimental API - may change.
@@ -469,6 +614,18 @@ class XAPIAN_VISIBILITY_DEFAULT QueryParser {
 	 */
 	FLAG_AUTO_MULTIWORD_SYNONYMS = 1024,
 
+	 /** Enable automatic use of error recovery.
+	  *
+	  *  This flags determines whether the parser automatically corrects the
+	  *  query or not. If there are errors in the query, then suggestions are
+	  *  made in corrected_string (callable via get_corrected_query_string()
+	  *  method) irrespective of whether this flag is enabled or not.
+	  *
+	  *  This flag makes the parser automatically correct the query so
+	  *  that it can be parsed.
+	  */
+	 FLAG_ERROR_RECOVERY = 2048,
+
 	/** The default flags.
 	 *
 	 *  Used if you don't explicitly pass any to @a parse_query().
@@ -476,7 +633,7 @@ class XAPIAN_VISIBILITY_DEFAULT QueryParser {
 	 *
 	 *  Added in Xapian 1.0.11.
 	 */
-	FLAG_DEFAULT = FLAG_PHRASE|FLAG_BOOLEAN|FLAG_LOVEHATE
+	FLAG_DEFAULT = FLAG_PHRASE|FLAG_BOOLEAN|FLAG_LOVEHATE|FLAG_ERROR_RECOVERY
     } feature_flag;
 
     /// Stemming strategies, for use with set_stemming_strategy().
@@ -733,6 +890,9 @@ class XAPIAN_VISIBILITY_DEFAULT QueryParser {
      *  If there were no corrections, an empty string is returned.
      */
     std::string get_corrected_query_string() const XAPIAN_PURE_FUNCTION;
+
+    /// Returns the struct representing the types of parse errors.
+    parse_error_s get_error_detail() const;
 
     /// Return a string describing this object.
     std::string get_description() const XAPIAN_PURE_FUNCTION;
