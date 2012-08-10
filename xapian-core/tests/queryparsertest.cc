@@ -2913,6 +2913,48 @@ static bool test_qp_errorrecovery_ignorequotes()
     return true;
 }
 
+static const test test_ignorelovehate_queries[] = {
+    { "php +..", "Zphp@1" },
+    { "+/- xapian", "Zxapian@1" },
+    { "xapian -> pointer", "(Zxapian@1 OR Zpointer@2)" },
+    { "rewritable -[]", "Zrewrit@1" },
+    { "is the right way -> or * or +>", "(((Zis@1 OR Zthe@2 OR Zright@3 OR Zway@4) OR Zor@5) OR Zor@6)" },
+    { "chrome +#! new version", "(Zchrome@1 OR (Znew@2 OR Zversion@3))" },
+    { "man -? help", "(Zman@1 OR Zhelp@2)" },
+    { "help with man -* options", "((Zhelp@1 OR Zwith@2 OR Zman@3) OR Zoption@4)" },
+    // The last word "test" in the following query should not be hated.
+    { "weekly -!! test", "(Zweek@1 OR Ztest@2)" },
+    { NULL, NULL }
+};
+
+static bool test_qp_errorrecovery_ignorelovehate()
+{
+    Xapian::QueryParser qp;
+    qp.set_stemmer(Xapian::Stem("english"));
+    qp.set_stemming_strategy(Xapian::QueryParser::STEM_SOME);
+    for (const test *p = test_ignorelovehate_queries; p->query; ++p) {
+        string expect, parsed;
+        if (p->expect)
+            expect = p->expect;
+        else
+            expect = "parse error";
+        try {
+            Xapian::Query qobj = qp.parse_query(p->query);
+            parsed = qobj.get_description();
+            expect = string("Query(") + expect + ')';
+        } catch (const Xapian::QueryParserError &e) {
+            parsed = e.get_msg();
+        } catch (const Xapian::Error &e) {
+            parsed = e.get_description();
+        } catch (...) {
+            parsed = "Unknown exception!";
+        }
+        tout << "Query: " << p->query << '\n';
+        TEST_STRINGS_EQUAL(parsed, expect);
+    }
+    return true;
+}
+
 /// Test cases for the QueryParser.
 static const test_desc tests[] = {
     TESTCASE(queryparser1),
@@ -2960,6 +3002,7 @@ static const test_desc tests[] = {
     TESTCASE(qp_errorrecovery_ignorebrackets),
     TESTCASE(qp_errorrecovery_dontignorebra),
     TESTCASE(qp_errorrecovery_ignorequotes),
+    TESTCASE(qp_errorrecovery_ignorelovehate),
     END_OF_TESTCASES
 };
 
