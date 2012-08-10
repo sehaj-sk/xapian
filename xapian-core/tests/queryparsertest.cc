@@ -2743,6 +2743,55 @@ static bool test_qp_defaultstrategysome1()
     return true;
 }
 
+static const test test_unmatchedbrackets_queries[] = {
+    { "euro cup (2012) (arrives", "(((Zeuro@1 OR Zcup@2) OR 2012@3) OR Zarriv@4)" },
+    { "a AND (b OR (c AND d)", "(Za@1 AND (Zb@2 OR (Zc@3 AND Zd@4)))" },
+    { "a AND (b OR (c AND d", "(Za@1 AND (Zb@2 OR (Zc@3 AND Zd@4)))" },
+    { "a AND b)", "(Za@1 AND Zb@2)" },
+    { "chrome (new version))", "(Zchrome@1 OR (Znew@2 OR Zversion@3))" },
+    { "a) AND (b OR (c NEAR d) AND (x XOR y", "(Za@1 AND (Zb@2 OR ((c@3 NEAR 11 d@4) AND (Zx@5 XOR Zy@6))))" },
+    { "asp 0x80040E14)", "(Zasp@1 OR 0x80040e14@2)" },
+    { "And at last ))))", "(and@1 OR Zat@2 OR Zlast@3)" },
+    // In the following query, the lexer should first take care of the unclosed
+    // quote (and hence decrement the size of prefix_stack), and then do the
+    // matching for unclosed bracket.
+    // Here "site" is a non-boolean filter, mapped to "S".
+    { "latest (watches site:\"xapian", "(Zlatest@1 OR (Zwatch@2 OR Sxapian@3))" },
+    // This can also cover the general cases of parse errors due to emoticons.
+    { "The interview was superb :-)", "(the@1 OR Zinterview@2 OR Zwas@3 OR Zsuperb@4)" },
+    { "I am afraid :-(", "(i@1 OR Zam@2 OR Zafraid@3)" },
+    { NULL, NULL }
+};
+
+static bool test_qp_errorrecovery_unmatchedbrackets()
+{
+    Xapian::QueryParser qp;
+    qp.set_stemmer(Xapian::Stem("english"));
+    qp.set_stemming_strategy(Xapian::QueryParser::STEM_SOME);
+    qp.add_prefix("site","S");
+    for (const test *p = test_unmatchedbrackets_queries; p->query; ++p) {
+        string expect, parsed;
+        if (p->expect)
+            expect = p->expect;
+        else
+            expect = "parse error";
+        try {
+            Xapian::Query qobj = qp.parse_query(p->query);
+            parsed = qobj.get_description();
+            expect = string("Query(") + expect + ')';
+        } catch (const Xapian::QueryParserError &e) {
+            parsed = e.get_msg();
+        } catch (const Xapian::Error &e) {
+            parsed = e.get_description();
+        } catch (...) {
+            parsed = "Unknown exception!";
+        }
+        tout << "Query: " << p->query << '\n';
+        TEST_STRINGS_EQUAL(parsed, expect);
+    }
+    return true;
+}
+
 /// Test cases for the QueryParser.
 static const test_desc tests[] = {
     TESTCASE(queryparser1),
@@ -2786,6 +2835,7 @@ static const test_desc tests[] = {
     TESTCASE(qp_default_op2),
     TESTCASE(qp_default_op3),
     TESTCASE(qp_defaultstrategysome1),
+    TESTCASE(qp_errorrecovery_unmatchedbrackets),
     END_OF_TESTCASES
 };
 
