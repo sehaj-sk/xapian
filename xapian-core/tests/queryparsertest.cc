@@ -2792,6 +2792,47 @@ static bool test_qp_errorrecovery_unmatchedbrackets()
     return true;
 }
 
+static const test test_ignorebrackets_queries[] = {
+    { "find (*^)", "Zfind@1" },
+    { "(./) chmod.sh", "(chmod@1 PHRASE 2 sh@2)" },
+    { "rm (*~)", "Zrm@1" },
+    { "make (#)", "Zmake@1" },
+    { "(>>another crazy<<) ([[*]]) query (*^%@##)", "((Zanoth@1 OR crazy@2) OR Zqueri@3)" },
+    // In the following queries, brackets should not be ignored.
+    { "rm (./r )", "(Zrm@1 OR Zr@2)" },
+    { "for (./r || ./p)", "(Zfor@1 OR (Zr@2 OR Zp@3))" },
+    { "find (*.py) == NULL", "((Zfind@1 OR Zpy@2) OR null@3)" },
+    { NULL, NULL }
+};
+
+static bool test_qp_errorrecovery_ignorebrackets()
+{
+    Xapian::QueryParser qp;
+    qp.set_stemmer(Xapian::Stem("english"));
+    qp.set_stemming_strategy(Xapian::QueryParser::STEM_SOME);
+    for (const test *p = test_ignorebrackets_queries; p->query; ++p) {
+        string expect, parsed;
+        if (p->expect)
+            expect = p->expect;
+        else
+            expect = "parse error";
+        try {
+            Xapian::Query qobj = qp.parse_query(p->query);
+            parsed = qobj.get_description();
+            expect = string("Query(") + expect + ')';
+        } catch (const Xapian::QueryParserError &e) {
+            parsed = e.get_msg();
+        } catch (const Xapian::Error &e) {
+            parsed = e.get_description();
+        } catch (...) {
+            parsed = "Unknown exception!";
+        }
+        tout << "Query: " << p->query << '\n';
+        TEST_STRINGS_EQUAL(parsed, expect);
+    }
+    return true;
+}
+
 /// Test cases for the QueryParser.
 static const test_desc tests[] = {
     TESTCASE(queryparser1),
@@ -2836,6 +2877,7 @@ static const test_desc tests[] = {
     TESTCASE(qp_default_op3),
     TESTCASE(qp_defaultstrategysome1),
     TESTCASE(qp_errorrecovery_unmatchedbrackets),
+    TESTCASE(qp_errorrecovery_ignorebrackets),
     END_OF_TESTCASES
 };
 
