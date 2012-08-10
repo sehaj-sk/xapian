@@ -86,6 +86,13 @@ class QueryParser::Internal : public Xapian::Internal::intrusive_base {
 
     string corrected_query;
 
+    /// For detecting the position(s) of unmatched opening bracket '('.
+    list<int> maybe_unmatched_bra;
+
+    parse_error_s parse_error;
+
+    void initialize_parse_error();
+
     Xapian::termcount max_wildcard_expansion;
 
     void add_prefix(const string &field, const string &prefix,
