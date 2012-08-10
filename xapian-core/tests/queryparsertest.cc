@@ -2833,6 +2833,47 @@ static bool test_qp_errorrecovery_ignorebrackets()
     return true;
 }
 
+static const test test_dontignorebra_queries[] = {
+    { "new mail()", "(Znew@1 OR mail@2)" },
+    { "latest version(3.0.1)", "((Zlatest@1 OR version@2) OR 3.0.1@3)" },
+    { "localtime(time(NULL))", "(localtime@1 OR (time@2 OR null@3))" },
+    { "Server.CreateObject(\"ADODB.connection\")", "((server@1 PHRASE 2 createobject@2) OR (adodb@3 PHRASE 2 connection@4))" },
+    { "while(true) find(*.py)", "(((while@1 OR Ztrue@2) OR find@3) OR Zpy@4)" },
+    // Following two queries differ only in terms of whitespace before "(c".
+    // Thus both of them should generate same query.
+    { "a AND b OR(c NEAR d)", "((Za@1 AND Zb@2) OR (c@3 NEAR 11 d@4))" },
+    { "a AND b OR (c NEAR d)", "((Za@1 AND Zb@2) OR (c@3 NEAR 11 d@4))" },
+    { NULL, NULL }
+};
+
+static bool test_qp_errorrecovery_dontignorebra()
+{
+    Xapian::QueryParser qp;
+    qp.set_stemmer(Xapian::Stem("english"));
+    qp.set_stemming_strategy(Xapian::QueryParser::STEM_SOME);
+    for (const test *p = test_dontignorebra_queries; p->query; ++p) {
+        string expect, parsed;
+        if (p->expect)
+            expect = p->expect;
+        else
+            expect = "parse error";
+        try {
+            Xapian::Query qobj = qp.parse_query(p->query);
+            parsed = qobj.get_description();
+            expect = string("Query(") + expect + ')';
+        } catch (const Xapian::QueryParserError &e) {
+            parsed = e.get_msg();
+        } catch (const Xapian::Error &e) {
+            parsed = e.get_description();
+        } catch (...) {
+            parsed = "Unknown exception!";
+        }
+        tout << "Query: " << p->query << '\n';
+        TEST_STRINGS_EQUAL(parsed, expect);
+    }
+    return true;
+}
+
 /// Test cases for the QueryParser.
 static const test_desc tests[] = {
     TESTCASE(queryparser1),
@@ -2878,6 +2919,7 @@ static const test_desc tests[] = {
     TESTCASE(qp_defaultstrategysome1),
     TESTCASE(qp_errorrecovery_unmatchedbrackets),
     TESTCASE(qp_errorrecovery_ignorebrackets),
+    TESTCASE(qp_errorrecovery_dontignorebra),
     END_OF_TESTCASES
 };
 
