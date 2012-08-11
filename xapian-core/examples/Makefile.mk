@@ -8,7 +8,8 @@ bin_PROGRAMS +=\
 	examples/simpleexpand\
 	examples/simpleindex\
 	examples/simplesearch\
-	examples/xapian-metadata
+	examples/xapian-metadata\
+	examples/pos_index
 
 examples_copydatabase_SOURCES = examples/copydatabase.cc
 examples_copydatabase_LDADD = $(ldflags) $(libxapian_la)
@@ -28,6 +29,9 @@ examples_simplesearch_LDADD = $(ldflags) $(libxapian_la)
 examples_xapian_metadata_SOURCES = examples/xapian-metadata.cc
 examples_xapian_metadata_LDADD = $(ldflags) $(libxapian_la)
 
+examples_pos_index_SOURCES = examples/pos_index.cc
+examples_pos_index_LDADD = $(ldflags) $(libxapian_la)
+
 if !MAINTAINER_NO_DOCS
 dist_man_MANS +=\
 	examples/copydatabase.1\
@@ -44,4 +48,7 @@ examples/quest.1: examples/quest$(EXEEXT) makemanpage
 
 examples/xapian-metadata.1: examples/xapian-metadata$(EXEEXT) makemanpage
 	./makemanpage examples/xapian-metadata $(srcdir)/examples/xapian-metadata.cc examples/xapian-metadata.1
+
+examples/pos_index.1: examples/pos_index$(EXEEXT) makemanpage
+	./makemanpage examples/pos_index $(srcdir)/examples/pos_index.cc examples/pos_index.1
 endif
