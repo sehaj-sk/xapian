@@ -36,12 +36,14 @@ check-none: apitest$(EXEEXT) \
             internaltest$(EXEEXT) \
 	    stemtest$(EXEEXT) \
 	    queryparsertest$(EXEEXT) \
+	    linkgrammartest$(EXEEXT) \
 	    termgentest$(EXEEXT) \
 	    unittest$(EXEEXT)
 	$(TESTS_ENVIRONMENT) ./apitest$(EXEEXT) -b none
 	$(TESTS_ENVIRONMENT) ./internaltest$(EXEEXT)
 	$(TESTS_ENVIRONMENT) ./stemtest$(EXEEXT)
 	$(TESTS_ENVIRONMENT) ./queryparsertest$(EXEEXT)
+	$(TESTS_ENVIRONMENT) ./linkgrammartest$(EXEEXT)
 	$(TESTS_ENVIRONMENT) ./termgentest$(EXEEXT)
 	$(TESTS_ENVIRONMENT) ./unittest$(EXEEXT)
 
@@ -101,11 +103,12 @@ endif
 
 ## Test programs to be run
 TESTS = apitest$(EXEEXT) internaltest$(EXEEXT) stemtest$(EXEEXT) \
- queryparsertest$(EXEEXT) termgentest$(EXEEXT) unittest$(EXEEXT)
+ queryparsertest$(EXEEXT) linkgrammartest$(EXEEXT) termgentest$(EXEEXT) \
+ unittest$(EXEEXT)
 
 ## Programs to build
 check_PROGRAMS = \
-	apitest internaltest stemtest queryparsertest termgentest unittest
+	apitest internaltest stemtest queryparsertest linkgrammartest termgentest unittest
 
 # Make sure runtest is up to date before running tests
 check_SCRIPTS = runtest
@@ -165,6 +168,10 @@ internaltest_LDADD = ../libgetopt.la ../$(libxapian_la)
 queryparsertest_SOURCES = queryparsertest.cc $(testharness_sources)
 queryparsertest_LDFLAGS = -no-install $(ldflags)
 queryparsertest_LDADD = ../libgetopt.la ../$(libxapian_la)
+
+linkgrammartest_SOURCES = linkgrammartest.cc $(testharness_sources)
+linkgrammartest_LDFLAGS = -no-install $(ldflags)
+linkgrammartest_LDADD = ../libgetopt.la ../$(libxapian_la)
 
 termgentest_SOURCES = termgentest.cc $(testharness_sources)
 termgentest_LDFLAGS = -no-install $(ldflags)
