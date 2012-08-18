@@ -114,6 +114,49 @@ is_positional(Xapian::Query::op op)
     return (op == Xapian::Query::OP_PHRASE || op == Xapian::Query::OP_NEAR);
 }
 
+inline bool
+pseudo_brackets_tell(unsigned ch) {
+    return ch == ')' || ch == '(' || is_wordchar(ch);
+}
+
+inline bool
+pseudo_quotes_tell(unsigned ch) {
+    return is_double_quote(ch) || is_wordchar(ch);
+}
+
+inline bool
+is_wordchar_whitespace(unsigned ch) {
+    return is_whitespace(ch) || is_wordchar(ch);
+}
+
+inline bool
+pseudo_lovehate_checker(Utf8Iterator it)
+{
+    Utf8Iterator end;
+    Utf8Iterator wordchar_or_whitespace = find_if(it, end, is_wordchar_whitespace);
+
+    return wordchar_or_whitespace == end || is_whitespace(*wordchar_or_whitespace);
+}
+
+inline bool
+is_nonnumeral_whitespace(unsigned ch) {
+    return is_whitespace(ch) || (!is_digit(ch) && is_wordchar(ch));
+}
+
+inline bool
+is_numeral(Utf8Iterator it)
+{
+    Utf8Iterator end;
+    // We just check that while iterating, we detect a white-space first or a
+    // non-digit wordchar. Note that here we are not trying to find what the
+    // numeral is. We are just checking whether after '+'/'-', is there a
+    // numeral or not. Hence we don't need to worry about ','
+    // (such as in "-3,000") or '.' (such as in"-3.14") or any other non-word
+    // character.
+    Utf8Iterator p = find_if(it, end, is_nonnumeral_whitespace);
+    return p == end || is_whitespace(*p);
+}
+
 /// A structure identifying a group of filter terms or a value range.
 struct filter_group_id {
     /** The field info for boolean filter terms.
@@ -904,6 +947,19 @@ just_had_operator_needing_term:
 			newprev = *it++;
 			break;
 		    }
+		    // Ignore quotes containing only non-word character(s)
+		    // inside them
+		    // Can't count for nested quotes here since the character
+		    // for opening as well as closing quotes is same - '"' !
+		    Utf8Iterator quote_or_wordchar = find_if(it, end, pseudo_quotes_tell);
+		    if (quote_or_wordchar == end || is_double_quote(*quote_or_wordchar)) {
+		        // If reached end or reached '"', then don't consider
+		        // it as the token QUOTE and move the iterator forwards.
+		        it = quote_or_wordchar;
+		        if (it == end) goto done;
+		        newprev = *it++;
+		        break;
+		    }
 		}
 		if (flags & QueryParser::FLAG_PHRASE) {
 		    Parse(pParser, QUOTE, NULL, &state);
@@ -925,23 +981,31 @@ just_had_operator_needing_term:
 		    // Or if not after whitespace or an open bracket.
 		    break;
 		}
-		if (is_whitespace(*it) || *it == '+' || *it == '-') {
-		    // Ignore + or - followed by a space, or further + or -.
+		if (is_whitespace(*it) || *it == '+' || *it == '-'  || pseudo_lovehate_checker(it)) {
+		    // Ignore + or - followed by a space, or further + or -,
+		    // or if there are only non-word character(s) after them till
+		    // the next whitespace or the end of query (such as "+...").
 		    // Postfix + (such as in C++ and H+) is handled as part of
 		    // the term lexing code in parse_term().
 		    newprev = *it++;
 		    break;
 		}
 		if (mode == DEFAULT && (flags & FLAG_LOVEHATE)) {
-		    int token;
-		    if (ch == '+') {
-			token = LOVE;
-		    } else if (last_was_operator) {
-			token = HATE_AFTER_AND;
-		    } else {
-			token = HATE;
+		    // If followed by numeral, then don't consider as the
+		    // token LOVE/HATE. But take care that if there is a
+		    // quote or '(' after '+'/'-', then treat them as
+		    // LOVE/HATE only.
+		    if (is_double_quote(*it) || *it == '(' || !is_numeral(it)) {
+		        int token;
+		        if (ch == '+') {
+		            token = LOVE;
+		        } else if (last_was_operator) {
+		            token = HATE_AFTER_AND;
+		        } else {
+		            token = HATE;
+		        }
+		        Parse(pParser, token, NULL, &state);
 		    }
-		    Parse(pParser, token, NULL, &state);
 		    goto just_had_operator_needing_term;
 		}
 		// Need to prevent the term after a LOVE or HATE starting a
@@ -953,27 +1017,36 @@ just_had_operator_needing_term:
 		it = find_if(it, end, is_not_whitespace);
 		// Ignore ( at the end of the query string.
 		if (it == end) goto done;
-		if (prev > ' ' && strchr("()+-", prev) == NULL) {
-		    // Or if not after whitespace or a bracket or '+' or '-'.
-		    break;
-		}
 		if (*it == ')') {
 		    // Ignore empty ().
 		    newprev = *it++;
 		    break;
 		}
 		if (mode == DEFAULT && (flags & FLAG_BOOLEAN)) {
+		    // Ignore brackets containing only non-word character(s)
+		    // inside them
+		    // Also check for '(' since there may be the case of
+		    // nested brackets. If so, then would be better to just
+		    // refer the present character as token BRA rather than
+		    // iterating further to see what the case is.
+		    Utf8Iterator bra_ket_wordchar = find_if(it, end, pseudo_brackets_tell);
+		    if (bra_ket_wordchar == end || *bra_ket_wordchar == ')') {
+		        // If reached end or reached ')', then don't consider
+		        // it as the token BRA and move the iterator forwards.
+		        it = bra_ket_wordchar;
+		        if (it == end) goto done;
+		        newprev = *it++;
+		        break;
+		    }
 		    prefix_stack.push_back(prefix_stack.back());
 		    Parse(pParser, BRA, NULL, &state);
 		}
 		break;
 
 	      case ')': // End of bracketed subexpression.
-		if (mode == DEFAULT && (flags & FLAG_BOOLEAN)) {
+		if (mode == DEFAULT && (flags & FLAG_BOOLEAN) && prefix_stack.size() > 1) {
 		    // Remove the prefix we pushed for the corresponding BRA.
-		    // If brackets are unmatched, it's a syntax error, but
-		    // that's no excuse to SEGV!
-		    if (prefix_stack.size() > 1) prefix_stack.pop_back();
+		    prefix_stack.pop_back();
 		    Parse(pParser, KET, NULL, &state);
 		}
 		break;
@@ -1345,6 +1418,19 @@ done:
 	// Implicitly close any unclosed quotes...
 	if (mode == IN_QUOTES || mode == IN_PREFIXED_QUOTES)
 	    Parse(pParser, QUOTE, NULL, &state);
+
+	// Remove the prefix we pushed for any unclosed quotes before
+	// trying to close the unmatched brackets
+	// Example query: latest (watches site:"xapian
+	// In this example, "site" corresponds to a non-boolean filter
+	if (mode == IN_PREFIXED_QUOTES)
+	    prefix_stack.pop_back();
+
+	// To avoid possible parse errors related to unmatched brackets
+	while (prefix_stack.size() > 1) {
+	    Parse(pParser, KET, NULL, &state);
+	    prefix_stack.pop_back();
+	}
 	Parse(pParser, 0, NULL, &state);
     }
 
@@ -1874,6 +1960,7 @@ prob_expr(E) ::= prob(P). {
     if (P->hate && !P->hate->empty()) {
 	if (!E) {
 	    // Can't just hate!
+	    state->error = "Syntax Error: Can't just HATE a term. Either remove '-' or give some non-hated term(s).";
 	    yy_parse_failed(yypParser);
 	    return;
 	}
