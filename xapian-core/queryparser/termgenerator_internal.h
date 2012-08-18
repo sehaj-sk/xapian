@@ -26,6 +26,7 @@
 #include <xapian/document.h>
 #include <xapian/termgenerator.h>
 #include <xapian/stem.h>
+#include <config.h>
 
 namespace Xapian {
 
@@ -49,6 +50,11 @@ class TermGenerator::Internal : public Xapian::Internal::intrusive_base {
 		    termcount weight,
 		    const std::string & prefix,
 		    bool with_positions);
+
+    #ifdef HAVE_LIBLINK_GRAMMAR
+    void index_text_with_POS(const std::string & text, termcount weight,
+            const std::string & prefix, bool with_positions);
+    #endif /* HAVE_LIBLINK_GRAMMAR */
 };
 
 }
