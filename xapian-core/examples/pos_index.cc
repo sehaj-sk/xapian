@@ -69,7 +69,7 @@ exit(1);
     doc.set_data(line);
 
     indexer.set_document(doc);
-    indexer.index_text_with_POS(line);
+    indexer.index_text_with_POS(line, true);
 
     // Add the document to the database.
     db.add_document(doc);

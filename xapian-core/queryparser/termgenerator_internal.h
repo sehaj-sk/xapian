@@ -52,8 +52,19 @@ class TermGenerator::Internal : public Xapian::Internal::intrusive_base {
 		    bool with_positions);
 
     #ifdef HAVE_LIBLINK_GRAMMAR
-    void index_text_with_POS(const std::string & text, termcount weight,
-            const std::string & prefix, bool with_positions);
+
+    void index_sentence_with_POS(const std::string & sentence,
+            termcount weight,
+            const std::string & prefix,
+            bool with_positions);
+
+    #ifdef HAVE_ICUUC
+    void index_text_with_POS(const std::string & text,
+            termcount weight,
+            const std::string & prefix,
+            bool with_positions);
+    #endif /* HAVE_ICUUC */
+
     #endif /* HAVE_LIBLINK_GRAMMAR */
 };
 

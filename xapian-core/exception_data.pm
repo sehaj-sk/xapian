@@ -196,6 +196,12 @@ errorclass(19, 'LinkGrammarError', 'RuntimeError', <<'DOC');
  */
 DOC
 
+errorclass(20, 'TermGeneratorError', 'RuntimeError', <<'DOC');
+/** Indicates the failure of breaking of text into sentences using ICU
+ *  Break Iterator class.
+ */
+DOC
+
 sub for_each_nothrow {
     my $func = shift @_;
     my $class = '';

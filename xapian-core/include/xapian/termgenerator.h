@@ -200,10 +200,16 @@ class XAPIAN_VISIBILITY_DEFAULT TermGenerator {
      *  "VERBplaying" (keeping in mind the difference due to stemming strategy)
      *
      *  @param text     The text to index.
+     *  @param is_single_sentence   Tells whether to use sentence breaking or
+     *          not. This is useful if user wants to use own sentence breaking
+     *          implementation or if a a text is such that the best way to
+     *          index is to feed in sentences rather than the whole text
+     *          (default false).
      *  @param wdf_inc  The wdf increment (default 1).
      *  @param prefix   The term prefix to use (default is no prefix).
      */
     void index_text_with_POS(const std::string & text,
+                      bool is_single_sentence = false,
                       Xapian::termcount wdf_inc = 1,
                       const std::string & prefix = std::string());
 
@@ -215,10 +221,16 @@ class XAPIAN_VISIBILITY_DEFAULT TermGenerator {
      * but that phrase searching and NEAR won't be supported.
      *
      *  @param text     The text to index.
+     *  @param is_single_sentence   Tells whether to use sentence breaking or
+     *          not. This is useful if user wants to use own sentence breaking
+     *          implementation or if a a text is such that the best way to
+     *          index is to feed in sentences rather than the whole text
+     *          (default false).
      *  @param wdf_inc  The wdf increment (default 1).
      *  @param prefix   The term prefix to use (default is no prefix).
      */
     void index_text_with_POS_without_positions(const std::string & text,
+                      bool is_single_sentence = false,
                       Xapian::termcount wdf_inc = 1,
                       const std::string & prefix = std::string());
 
