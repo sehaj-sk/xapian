@@ -9,7 +9,8 @@ noinst_HEADERS +=\
 	queryparser/queryparser_internal.h\
 	queryparser/queryparser_token.h\
 	queryparser/termgenerator_internal.h\
-	queryparser/constituents.h
+	queryparser/constituents.h\
+	queryparser/linkgrammar_internal.h
 
 lemon_built_sources =\
 	queryparser/queryparser_internal.cc\
@@ -64,4 +65,5 @@ lib_src +=\
 	queryparser/queryparser_internal.cc\
 	queryparser/termgenerator.cc\
 	queryparser/termgenerator_internal.cc\
-	queryparser/linkgrammar.cc
+	queryparser/linkgrammar.cc\
+	queryparser/linkgrammar_internal.cc
