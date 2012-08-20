@@ -855,6 +855,7 @@ QueryParser::Internal::parse_query(const string &qs, unsigned flags,
 
     ParserHandler pParser(ParseAlloc());
 
+#ifdef HAVE_LIBLINK_GRAMMAR
     // Algorithm:
     //
     // *Step-1*: Obtain the list of words along with their POS using LinkGrammar
@@ -1127,6 +1128,7 @@ QueryParser::Internal::parse_query(const string &qs, unsigned flags,
         return Query(Query::OP_OR, state.query, Query(Query::OP_OR,
                         NP_list.begin(), NP_list.end()));
     }
+#endif /* HAVE_LIBLINK_GRAMMAR */
 
     unsigned newprev = ' ';
 main_lex_loop:
