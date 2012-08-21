@@ -190,6 +190,12 @@ errorclass(18, 'RangeError', 'RuntimeError', <<'DOC');
  */
 DOC
 
+errorclass(19, 'LinkGrammarError', 'RuntimeError', <<'DOC');
+/** Indicates that the dictionary specified to be used for Link Grammar could
+ *  not be opened.
+ */
+DOC
+
 sub for_each_nothrow {
     my $func = shift @_;
     my $class = '';
