@@ -3003,6 +3003,70 @@ static bool test_qp_errorrecovery_negativenumerals()
     return true;
 }
 
+#ifdef HAVE_LIBLINK_GRAMMAR
+static const test test_free_form_queries[] = {
+    { "Who won Euro-2012?", "((ZVERBwon@2 OR (euro@3 PHRASE 2 2012@4)) OR NOUNPHRASEeuro#2012)" },
+    { "What is the best way to go to New Zealand?", "((ZADJECTIVEbest@4 OR ZNOUNway@5 OR ZVERBgo@7 OR Znew@9 OR Zzealand@10) OR NOUNPHRASEnew#zealand)" },
+    { "How is Apache license different from GPL license?", "((Zapach@3 OR ZNOUNlicens@4 OR ZADJECTIVEdiffer@5 OR Zgpl@7 OR ZNOUNlicens@8) OR (NOUNPHRASEapache#license OR NOUNPHRASEgpl#license))"},
+    { "Which jobs are available for computer programmers in Sydney?", "((ZNOUNjob@2 OR ZADJECTIVEavail@4 OR ZNOUNcomput@6 OR ZNOUNprogramm@7 OR ZNOUNsydney@9) OR (NOUNPHRASEcomputer#programmers OR NOUNPHRASEsydney))" },
+    { "What is the Fifa ranking of Germany?", "((Zfifa@4 OR ZNOUNrank@5 OR ZNOUNgermani@7) OR (NOUNPHRASEthe#fifa#ranking OR NOUNPHRASEgermany))" },
+    { "Who will be the next president of U.S.?", "((ZADJECTIVEnext@5 OR ZNOUNpresid@6 OR Zus@8) OR NOUNPHRASEus)" },
+    { "What is the population size of the Asian subcontinent?", "((ZNOUNpopul@4 OR ZNOUNsize@5 OR ZNOUNasian@8 OR ZNOUNsubcontin@9) OR (NOUNPHRASEthe#population#size OR NOUNPHRASEthe#asian#subcontinent))" },
+    { "Which city in South America has the largest popultation size?", "((ZNOUNciti@2 OR Zsouth@4 OR ZNOUNamerica@5 OR ZVERBhas@6 OR ZADJECTIVElargest@8 OR ZNOUNpopult@9 OR ZNOUNsize@10) OR NOUNPHRASEsouth#america)" },
+    { "How to use Github?", "(Zuse@3 OR Zgithub@4)" },
+    { "List the positions that require a knowledge of Microsoft Excel", "((ZVERBlist@1 OR ZNOUNposit@3 OR ZVERBrequir@5 OR ZNOUNknowledg@7 OR Zmicrosoft@9 OR Zexcel@10) OR (NOUNPHRASEthe#positions OR NOUNPHRASEa#knowledge OR NOUNPHRASEmicrosoft#excel))" },
+    { "Is min-heap a type of priority queue?", "(((min@2 PHRASE 2 heap@3) OR (Ztype@5 OR ZNOUNprioriti@7 OR ZNOUNqueue@8)) OR (NOUNPHRASEmin#heap OR NOUNPHRASEpriority#queue))" },
+    { "Top 10 start-ups", "(((ZNOUNtop@1 OR 10@2) OR (start@3 PHRASE 2 ups@4)) OR NOUNPHRASEtop#10)" },
+    { "Can Omega index a relational database?", "((ZVERBcan@1 OR ZNOUNomega@2 OR ZVERBindex@3 OR ZADJECTIVErelat@5 OR ZNOUNdatabas@6) OR (NOUNPHRASEomega OR NOUNPHRASEa#relational#database))" },
+    { "Is there an IRC channel I can idle on?", "((Zthere@2 OR Zirc@4 OR ZNOUNchannel@5 OR ZVERBcan@7 OR ZVERBidl@8) OR NOUNPHRASEan#irc#channel)" },
+    { NULL, NULL }
+};
+#endif /* HAVE_LIBLINK_GRAMMAR */
+
+static bool test_qp_flag_free_form()
+{
+#ifdef HAVE_LIBLINK_GRAMMAR
+    Xapian::QueryParser qp;
+    qp.set_stemmer(Xapian::Stem("english"));
+    qp.set_stemming_strategy(Xapian::QueryParser::STEM_SOME);
+    static const char * stop_words[] = {
+        "a", "about", "an", "and", "are", "as", "at",
+        "be", "by",
+        "en",
+        "for", "from",
+        "how",
+        "i", "in", "is", "it",
+        "of", "on", "or",
+        "that", "the", "this", "to",
+        "was", "what", "when", "where", "which", "who", "why", "will", "with"
+    };
+    Xapian::SimpleStopper stopper(stop_words,
+                stop_words + sizeof(stop_words) / sizeof(stop_words[0]));
+    qp.set_stopper(&stopper);
+    for (const test *p = test_free_form_queries; p->query; ++p) {
+        string expect, parsed;
+        if (p->expect)
+            expect = p->expect;
+        else
+            expect = "parse error";
+        try {
+            Xapian::Query qobj = qp.parse_query(p->query, qp.FLAG_FREE_FORM);
+            parsed = qobj.get_description();
+            expect = string("Query(") + expect + ')';
+        } catch (const Xapian::QueryParserError &e) {
+            parsed = e.get_msg();
+        } catch (const Xapian::Error &e) {
+            parsed = e.get_description();
+        } catch (...) {
+            parsed = "Unknown exception!";
+        }
+        tout << "Query: " << p->query << '\n';
+        TEST_STRINGS_EQUAL(parsed, expect);
+    }
+#endif /* HAVE_LIBLINK_GRAMMAR */
+    return true;
+}
+
 /// Test cases for the QueryParser.
 static const test_desc tests[] = {
     TESTCASE(queryparser1),
@@ -3052,6 +3116,7 @@ static const test_desc tests[] = {
     TESTCASE(qp_errorrecovery_ignorequotes),
     TESTCASE(qp_errorrecovery_ignorelovehate),
     TESTCASE(qp_errorrecovery_negativenumerals),
+    TESTCASE(qp_flag_free_form),
     END_OF_TESTCASES
 };
 
