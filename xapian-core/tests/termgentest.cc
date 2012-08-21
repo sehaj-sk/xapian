@@ -53,6 +53,8 @@ struct test {
     //    (this persists for subsequent tests until it's turned off).
     //  - prefix=FOO: Use the specified prefix.
     //    (this persists for subsequent tests until it's turned off).
+    //  - use_lg: Use the POS based indexing. (Single Sentence).
+    //  - multiple_use_lg: Use the POS based indexing. (Multiple Sentences).
     const char *options;
 
     // The text to be processed.
@@ -150,6 +152,24 @@ static const test test_simple[] = {
     { "stem=en,some",
 	  "11:59", "11[1] 59[2]" },
     { "", "11:59am", "11[1] 59am[2]" },
+
+#ifdef HAVE_LIBLINK_GRAMMAR
+    {"use_lg", "The red balloon soared upwards.", "ADJECTIVEred[2] ADVERBupwards[5] NOUNPHRASEthe#red#balloon[6] NOUNballoon[3] VERBsoared[4] ZADJECTIVEred:1 ZADVERBupward:1 ZNOUNballoon:1 ZVERBsoar:1 Zthe:1 the[1]"},
+    {"use_lg,nopos", "The red balloon soared upwards.", "ADJECTIVEred:1 ADVERBupwards:1 NOUNPHRASEthe#red#balloon:1 NOUNballoon:1 VERBsoared:1 ZADJECTIVEred:1 ZADVERBupward:1 ZNOUNballoon:1 ZVERBsoar:1 Zthe:1 the:1"},
+
+    {"use_lg,prefix=XA", "The red balloon soared upwards.", "XAADJECTIVEred[2] XAADVERBupwards[5] XANOUNPHRASEthe#red#balloon[6] XANOUNballoon[3] XAVERBsoared[4] XAthe[1] ZXAADJECTIVEred:1 ZXAADVERBupward:1 ZXANOUNballoon:1 ZXAVERBsoar:1 ZXAthe:1"},
+
+    {"use_lg,none,prefix=", "The red balloon soared upwards.", "ADJECTIVEred[2] ADVERBupwards[5] NOUNPHRASEthe#red#balloon[6] NOUNballoon[3] VERBsoared[4] the[1]"},
+
+    // "upwards" stemmed to "upward". Also check that Noun Phrases are not absent.
+    {"use_lg,all", "The red balloon soared upwards.", "ADJECTIVEred[2] ADVERBupward[5] NOUNPHRASEthe#red#balloon[6] NOUNballoon[3] VERBsoar[4] the[1]"},
+    {"use_lg,all_z", "The red balloon soared upwards.", "NOUNPHRASEthe#red#balloon[6] ZADJECTIVEred[2] ZADVERBupward[5] ZNOUNballoon[3] ZVERBsoar[4] Zthe[1]"},
+
+#ifdef HAVE_ICUUC
+    {"multiple_use_lg,some,prefix=", "The red balloon soared upwards. It was beautiful!", "ADJECTIVEbeautiful[9] ADJECTIVEred[2] ADVERBupwards[5] NOUNPHRASEit[10] NOUNPHRASEthe#red#balloon[6] NOUNballoon[3] VERBsoared[4] VERBwas[8] ZADJECTIVEbeauti:1 ZADJECTIVEred:1 ZADVERBupward:1 ZNOUNballoon:1 ZVERBsoar:1 ZVERBwas:1 Zit:1 Zthe:1 it[7] the[1]"},
+    {"multiple_use_lg,nopos", "The red balloon soared upwards. It was beautiful!", "ADJECTIVEbeautiful:1 ADJECTIVEred:1 ADVERBupwards:1 NOUNPHRASEit:1 NOUNPHRASEthe#red#balloon:1 NOUNballoon:1 VERBsoared:1 VERBwas:1 ZADJECTIVEbeauti:1 ZADJECTIVEred:1 ZADVERBupward:1 ZNOUNballoon:1 ZVERBsoar:1 ZVERBwas:1 Zit:1 Zthe:1 it:1 the:1"},
+#endif /* HAVE_ICUUC */
+#endif /* HAVE_LIBLINK_GRAMMAR */
 
     { NULL, NULL, NULL }
 };
@@ -689,6 +709,8 @@ static bool test_termgen1()
 	int weight = 1;
 	bool new_doc = true;
 	bool nopos = false;
+	bool use_lg = false;
+	bool multiple_use_lg = false;
 
 	const char * o = p->options;
 	while (*o != '\0') {
@@ -732,6 +754,12 @@ static bool test_termgen1()
 		    prefix += *o;
 		    ++o;
 		}
+	    } else if (strncmp(o, "use_lg", 6) == 0) {
+	    o += 6;
+	    use_lg = true;
+	    } else if (strncmp(o, "multiple_use_lg", 15) == 0) {
+	    o += 15;
+	    multiple_use_lg = true;
 	    } else {
 		FAIL_TEST("Invalid options string: " << p->options);
 	    }
@@ -747,7 +775,26 @@ static bool test_termgen1()
 	string expect, output;
 	expect = p->expect;
 	try {
-	    if (nopos) {
+	    if (use_lg && nopos) {
+        #ifdef HAVE_LIBLINK_GRAMMAR
+	    termgen.index_text_with_POS_without_positions(p->text, true, weight,
+	                                                prefix);
+        #endif /* HAVE_LIBLINK_GRAMMAR */
+	    } else if (use_lg) {
+        #ifdef HAVE_LIBLINK_GRAMMAR
+		termgen.index_text_with_POS(p->text, true, weight, prefix);
+        #endif /* HAVE_LIBLINK_GRAMMAR */
+	    } else if (multiple_use_lg && nopos) {
+        #ifdef HAVE_LIBLINK_GRAMMAR
+		termgen.index_text_with_POS_without_positions(p->text, false, weight,
+		                                            prefix);
+        #endif /* HAVE_LIBLINK_GRAMMAR */
+	    } else if (multiple_use_lg) {
+		#ifdef HAVE_LIBLINK_GRAMMAR
+		termgen.index_text_with_POS(p->text, false, weight, prefix);
+        #endif /* HAVE_LIBLINK_GRAMMAR */
+	    }
+	    else if (nopos) {
 		termgen.index_text_without_positions(p->text, weight, prefix);
 	    } else {
 		termgen.index_text(p->text, weight, prefix);
