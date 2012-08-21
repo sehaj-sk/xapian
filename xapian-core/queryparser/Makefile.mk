@@ -65,4 +65,5 @@ lib_src +=\
 	queryparser/queryparser_internal.cc\
 	queryparser/termgenerator.cc\
 	queryparser/termgenerator_internal.cc\
-	queryparser/linkgrammar.cc
+	queryparser/linkgrammar.cc\
+	queryparser/linkgrammar_internal.cc
